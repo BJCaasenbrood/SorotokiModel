@@ -15,10 +15,19 @@ classdef solveroptionsX
         isConverged;
         Flag;
         Display;
+        DofMap;
         Space;
         SpaceHorizon;
         SpaceStep;
-        SigmoidFactor;
+
+        Xi0;
+        g0;
+        gL;
+
+        ThetaEval;
+        Xi0Eval;
+        KttEval;
+        MttEval;
     end
     
     methods
@@ -34,10 +43,11 @@ classdef solveroptionsX
             obj.Iteration     = 1;
             obj.SubIteration  = 1;
             obj.Bisection     = 1;
-            obj.Time          = 0;
-            obj.TimeHorizon   = 1;
-            obj.TimeStep      = 1e-3;
-            obj.SigmoidFactor = 0;
+            obj.Space          = 0;
+            obj.SpaceHorizon   = 1;
+            obj.SpaceStep      = 1e-3;
+            obj.g0            = eye(4);
+            obj.Xi0           = [0,0,0,1,0,0].';
         end
     end
 end

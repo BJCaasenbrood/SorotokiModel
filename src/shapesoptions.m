@@ -6,8 +6,6 @@ classdef shapesoptions
         NModal;
         NDof;
 
-        Xi0;
-
         Dimension;
         Color;
         ColorMap;
@@ -16,6 +14,12 @@ classdef shapesoptions
         Display;
         LineStyle;
         isAssembled;
+        isOrthonormal;
+
+        FilterRadius;
+        isVolumetricContact;
+        ContactDistance;
+        isRampCompensation;
     end
     
     methods
@@ -23,7 +27,6 @@ classdef shapesoptions
             %SDFOPTIONS Construct an instance of this class
             %   Detailed explanation goes here
             obj.Length              = 100;
-            obj.Xi0                 = [0,0,0,1,0,0].';
             obj.Color               = [32, 129, 191]/255;
             obj.ColorMap            = cmap_turbo;
             obj.Display             = true;
@@ -32,6 +35,11 @@ classdef shapesoptions
             obj.LineStyle           = '-';
             obj.isAssembled         = false;
             obj.Texture             = []; 
+            obj.FilterRadius        = 10;
+            obj.isVolumetricContact = true;
+            obj.ContactDistance     = 1e-3;
+            obj.isRampCompensation  = false;
+            obj.isOrthonormal       = true;
         end
     end
 end

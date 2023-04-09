@@ -7,9 +7,9 @@ for ii = 1:M
    Y(:,ii) = chebyshev(X,ii-1); % chebyshev
 end
 
-% ensure its orthonormal (gram–schmidt)
-if isempty(varargin)
-    Y = gsogpoly(Y,X);
-end
+% % ensure its orthonormal (gram–schmidt)
+% if isempty(varargin)
+%     Y = gsogpoly(Y,X);
+% end
 end
 

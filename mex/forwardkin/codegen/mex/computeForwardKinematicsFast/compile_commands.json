@@ -1,0 +1,68 @@
+[
+  {
+    "directory": "/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin/codegen/mex/computeForwardKinematicsFast",
+    "command": "/usr/bin/gcc -fexceptions -fPIC -fno-omit-frame-pointer -pthread -D_GNU_SOURCE -DMATLAB_MEX_FILE  -O2 -fwrapv -DNDEBUG -std=c99 -I \".\" -I \"/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin\" -I \"./interface\" -I \"/usr/local/MATLAB/R2023a/extern/include\" -I \".\" -DMODEL=computeForwardKinematicsFast_mex -msse2 -c  computeForwardKinematicsFast_data.c -o build/glnxa64/computeForwardKinematicsFast_data.o",
+    "file": "computeForwardKinematicsFast_data.c",
+    "output": "build/glnxa64/computeForwardKinematicsFast_data.o"
+  },
+  {
+    "directory": "/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin/codegen/mex/computeForwardKinematicsFast",
+    "command": "/usr/bin/gcc -fexceptions -fPIC -fno-omit-frame-pointer -pthread -D_GNU_SOURCE -DMATLAB_MEX_FILE  -O2 -fwrapv -DNDEBUG -std=c99 -I \".\" -I \"/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin\" -I \"./interface\" -I \"/usr/local/MATLAB/R2023a/extern/include\" -I \".\" -DMODEL=computeForwardKinematicsFast_mex -msse2 -c  rt_nonfinite.c -o build/glnxa64/rt_nonfinite.o",
+    "file": "rt_nonfinite.c",
+    "output": "build/glnxa64/rt_nonfinite.o"
+  },
+  {
+    "directory": "/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin/codegen/mex/computeForwardKinematicsFast",
+    "command": "/usr/bin/gcc -fexceptions -fPIC -fno-omit-frame-pointer -pthread -D_GNU_SOURCE -DMATLAB_MEX_FILE  -O2 -fwrapv -DNDEBUG -std=c99 -I \".\" -I \"/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin\" -I \"./interface\" -I \"/usr/local/MATLAB/R2023a/extern/include\" -I \".\" -DMODEL=computeForwardKinematicsFast_mex -msse2 -c  computeForwardKinematicsFast_initialize.c -o build/glnxa64/computeForwardKinematicsFast_initialize.o",
+    "file": "computeForwardKinematicsFast_initialize.c",
+    "output": "build/glnxa64/computeForwardKinematicsFast_initialize.o"
+  },
+  {
+    "directory": "/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin/codegen/mex/computeForwardKinematicsFast",
+    "command": "/usr/bin/gcc -fexceptions -fPIC -fno-omit-frame-pointer -pthread -D_GNU_SOURCE -DMATLAB_MEX_FILE  -O2 -fwrapv -DNDEBUG -std=c99 -I \".\" -I \"/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin\" -I \"./interface\" -I \"/usr/local/MATLAB/R2023a/extern/include\" -I \".\" -DMODEL=computeForwardKinematicsFast_mex -msse2 -c  computeForwardKinematicsFast_terminate.c -o build/glnxa64/computeForwardKinematicsFast_terminate.o",
+    "file": "computeForwardKinematicsFast_terminate.c",
+    "output": "build/glnxa64/computeForwardKinematicsFast_terminate.o"
+  },
+  {
+    "directory": "/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin/codegen/mex/computeForwardKinematicsFast",
+    "command": "/usr/bin/gcc -fexceptions -fPIC -fno-omit-frame-pointer -pthread -D_GNU_SOURCE -DMATLAB_MEX_FILE  -O2 -fwrapv -DNDEBUG -std=c99 -I \".\" -I \"/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin\" -I \"./interface\" -I \"/usr/local/MATLAB/R2023a/extern/include\" -I \".\" -DMODEL=computeForwardKinematicsFast_mex -msse2 -c  computeForwardKinematicsFast.c -o build/glnxa64/computeForwardKinematicsFast.o",
+    "file": "computeForwardKinematicsFast.c",
+    "output": "build/glnxa64/computeForwardKinematicsFast.o"
+  },
+  {
+    "directory": "/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin/codegen/mex/computeForwardKinematicsFast",
+    "command": "/usr/bin/gcc -fexceptions -fPIC -fno-omit-frame-pointer -pthread -D_GNU_SOURCE -DMATLAB_MEX_FILE  -O2 -fwrapv -DNDEBUG -std=c99 -I \".\" -I \"/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin\" -I \"./interface\" -I \"/usr/local/MATLAB/R2023a/extern/include\" -I \".\" -DMODEL=computeForwardKinematicsFast_mex -msse2 -c  mtimes.c -o build/glnxa64/mtimes.o",
+    "file": "mtimes.c",
+    "output": "build/glnxa64/mtimes.o"
+  },
+  {
+    "directory": "/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin/codegen/mex/computeForwardKinematicsFast",
+    "command": "/usr/bin/gcc -fexceptions -fPIC -fno-omit-frame-pointer -pthread -D_GNU_SOURCE -DMATLAB_MEX_FILE  -O2 -fwrapv -DNDEBUG -std=c99 -I \".\" -I \"/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin\" -I \"./interface\" -I \"/usr/local/MATLAB/R2023a/extern/include\" -I \".\" -DMODEL=computeForwardKinematicsFast_mex -msse2 -c  interface/_coder_computeForwardKinematicsFast_api.c -o build/glnxa64/_coder_computeForwardKinematicsFast_api.o",
+    "file": "interface/_coder_computeForwardKinematicsFast_api.c",
+    "output": "build/glnxa64/_coder_computeForwardKinematicsFast_api.o"
+  },
+  {
+    "directory": "/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin/codegen/mex/computeForwardKinematicsFast",
+    "command": "/usr/bin/gcc -fexceptions -fPIC -fno-omit-frame-pointer -pthread -D_GNU_SOURCE -DMATLAB_MEX_FILE  -O2 -fwrapv -DNDEBUG -std=c99 -I \".\" -I \"/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin\" -I \"./interface\" -I \"/usr/local/MATLAB/R2023a/extern/include\" -I \".\" -DMODEL=computeForwardKinematicsFast_mex -msse2 -c  interface/_coder_computeForwardKinematicsFast_mex.c -o build/glnxa64/_coder_computeForwardKinematicsFast_mex.o",
+    "file": "interface/_coder_computeForwardKinematicsFast_mex.c",
+    "output": "build/glnxa64/_coder_computeForwardKinematicsFast_mex.o"
+  },
+  {
+    "directory": "/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin/codegen/mex/computeForwardKinematicsFast",
+    "command": "/usr/bin/gcc -fexceptions -fPIC -fno-omit-frame-pointer -pthread -D_GNU_SOURCE -DMATLAB_MEX_FILE  -O2 -fwrapv -DNDEBUG -std=c99 -I \".\" -I \"/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin\" -I \"./interface\" -I \"/usr/local/MATLAB/R2023a/extern/include\" -I \".\" -DMODEL=computeForwardKinematicsFast_mex -msse2 -c  computeForwardKinematicsFast_emxutil.c -o build/glnxa64/computeForwardKinematicsFast_emxutil.o",
+    "file": "computeForwardKinematicsFast_emxutil.c",
+    "output": "build/glnxa64/computeForwardKinematicsFast_emxutil.o"
+  },
+  {
+    "directory": "/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin/codegen/mex/computeForwardKinematicsFast",
+    "command": "/usr/bin/gcc -fexceptions -fPIC -fno-omit-frame-pointer -pthread -D_GNU_SOURCE -DMATLAB_MEX_FILE  -O2 -fwrapv -DNDEBUG -std=c99 -I \".\" -I \"/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin\" -I \"./interface\" -I \"/usr/local/MATLAB/R2023a/extern/include\" -I \".\" -DMODEL=computeForwardKinematicsFast_mex -msse2 -c  interface/_coder_computeForwardKinematicsFast_info.c -o build/glnxa64/_coder_computeForwardKinematicsFast_info.o",
+    "file": "interface/_coder_computeForwardKinematicsFast_info.c",
+    "output": "build/glnxa64/_coder_computeForwardKinematicsFast_info.o"
+  },
+  {
+    "directory": "/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin/codegen/mex/computeForwardKinematicsFast",
+    "command": "/usr/bin/gcc -fexceptions -fPIC -fno-omit-frame-pointer -pthread -D_GNU_SOURCE -DMATLAB_MEX_FILE  -O2 -fwrapv -DNDEBUG -std=c99 -I \".\" -I \"/home/brandon/Documents/projects/SorotokiModel/mex/forwardkin\" -I \"./interface\" -I \"/usr/local/MATLAB/R2023a/extern/include\" -I \".\" -DMODEL=computeForwardKinematicsFast_mex -msse2 -c  /usr/local/MATLAB/R2023a/extern/version/c_mexapi_version.c -o build/glnxa64/c_mexapi_version.o",
+    "file": "/usr/local/MATLAB/R2023a/extern/version/c_mexapi_version.c",
+    "output": "build/glnxa64/c_mexapi_version.o"
+  }
+]

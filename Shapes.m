@@ -2,17 +2,19 @@ classdef Shapes
 
     properties (Access = public)
         Sdf;
+        Fem;
+        Material;
+
         options;
         solver;
-        kinsolver;
+        invkin;
         system;
         pod;
 
+        Length;     
         NDim;       % State dimensions
         NJoint;     % Joint dimension (i.e, NDim/2)
-        NDof;       % Shape joint DoF (max 6 -- geometric freedom)
-        NInput;     % Number of inputs (=dim(q) by default)
-        NModal;     % Number of modes
+        NInput;
         NNode;      % Number of nodes (spatial discretization)
         
         % Length;     % Intrinic length
@@ -97,16 +99,15 @@ methods
 %----------------------------------------------- MODAL SHAPE RECONSTRUCTION
 function obj = Shapes(Input,NModal,varargin) 
 
-    obj.options   = shapesoptions;
-    obj.solver    = solveroptionsX;
-    obj.kinsolver = solveroptions;
-    obj.system    = struct;
-    obj.pod = struct;
+    obj.options = shapesoptions;
+    obj.solver  = solveroptionsX;
+    obj.invkin  = solveroptions;
+    obj.system  = struct;
+    obj.pod     = struct;
 
     obj.options.NModal = NModal;
     obj.options.Table  = double(NModal > 0); 
     obj.options.NDof   = sum(obj.options.Table);
-    obj.options.Xi0    = [0,0,0,1,0,0].';
     
     % if isa(Input,'Fem')
     %     obj.Fem    = Input;
@@ -129,43 +130,39 @@ function obj = Shapes(Input,NModal,varargin)
     
     obj.Length = 100;
     obj.solver.Space = linspace(0,1,obj.NNode); 
-    obj.SpaceStep    = obj.Length/(obj.NNode);
+    obj.solver.SpaceStep = obj.Length/(obj.NNode);
 
     %obj.PODEnergy{2} = ones(size(Input,2),1);
     %obj.PODEnergy{1} = ones(size(Input,2),1);
     
-    obj.Gravity = zeros(3,1);
+    obj.system.Gravity = zeros(3,1);
     %end
 
     % cross-section SDF
-    obj.Sdf          = sCircle(5);
-    obj.Material     = NeoHookeanMaterial(0.05,0.33);
+    obj.Sdf      = sCircle(5);
+    obj.Material = NeoHookean(0.05,0.33);
     
-    obj.FilterRadius      = 10;
-    obj.VolumetricContact = true;
-    obj.ContactDistance   = 1e-3;
-    obj.RampCompensation  = false;
+    obj.options.FilterRadius      = 10;
+    obj.options.isVolumetricContact = true;
+    obj.options.ContactDistance   = 1e-3;
+    obj.options.isRampCompensation  = false;
 
-    obj.g0 = SE3(eye(3),zeros(3,1));
-    obj.gL = [];
-    obj.Log = struct;
+    %obj.Log = struct;
     
-    obj.Log.FK  = [];
-    obj.Log.EL  = [];
-    obj.Log.Shp = [];
+    %obj.Log.FK  = [];
+    %obj.Log.EL  = [];
+    %obj.Log.Shp = [];
 
-    obj.Kp = 1e-4;
-    obj.Kd = 1e3;
-    obj.TubeRadiusA     = 5;
-    obj.TubeRadiusB     = 5;
-    obj.TubeRadiusAlpha = 0;  
-    obj.TubeRamp        = 0;  
-    obj.Umin            = -1;
-    obj.Umax            = 1;
+    % obj.invkin.Kp = 1e-4;
+    % obj.invkin.Kd = 1e3;
+    % obj.TubeRadiusA     = 5;
+    % obj.TubeRadiusB     = 5;
+    % obj.TubeRadiusAlpha = 0;  
+    % obj.TubeRamp        = 0;  
+    % obj.Umin            = -1;
+    % obj.Umax            = 1;
            
-    for ii = 1:2:length(varargin)
-        obj.(varargin{ii}) = varargin{ii+1};
-    end
+    obj = vararginParser(obj,varargin{:});
    
     % if ~isempty(obj.Fem)
     % if ~isempty(obj.Fem.get('Output'))
@@ -178,20 +175,19 @@ function obj = Shapes(Input,NModal,varargin)
     % end
     % end
 
-    obj.NJoint = sum(obj.NModal);
+    obj.NJoint = sum(obj.options.NModal);
     obj.NDim   = 2*obj.NJoint;
 
-    if isempty(obj.X0)
-        obj.X0 = zeros(obj.NDim,1);
-    end
+    % if isempty(obj.X0)
+    %     obj.X0 = zeros(obj.NDim,1);
+    % end
     
-    if isempty(obj.InputMap)
-        obj.InputMap = @(x) eye(obj.NJoint);
+    if ~isfield(obj.system,'InputMap')
+        obj.system.InputMap = @(x) eye(obj.NJoint);
         obj.NInput = obj.NJoint;
     end
     
     obj = rebuild(obj);
-    
 end
 %---------------------------------------------------------------------- get     
 function varargout = get(Shapes,varargin)
@@ -383,130 +379,142 @@ end
 %------------------------------------------------------------ set reference
 function Shapes = rebuild(Shapes,varargin)
     
-for ii = 1:2:length(varargin)
-    Shapes.(varargin{ii}) = varargin{ii+1};
-end
+Shapes = vararginParser(Shapes,varargin{:});
 
 set = 1:6;
 I6  = eye(6);
 Xa  = [];
 
 for ii = 1:6
-    for jj = 1:Shapes.NModal(ii)
+    for jj = 1:Shapes.options.NModal(ii)
         Xa = [Xa,set(ii)];
     end
 end
 
-Shapes.NJoint  = sum(Shapes.NModal);
+Shapes.NJoint  = sum(Shapes.options.NModal);
 Shapes.NDim    = 2*Shapes.NJoint;
-Shapes.Ba      = I6(:,Xa);
-Shapes.Sigma   = linspace(0,1,Shapes.NNode);
-Shapes.ds      = Shapes.Length/(Shapes.NNode);
 
-Geval = Shapes.InputMap(zeros(Shapes.NJoint,1));
+Shapes.solver.DofMap    = I6(:,Xa);
+Shapes.solver.Space     = linspace(0,1,Shapes.NNode);
+Shapes.solver.SpaceStep = Shapes.Length/(Shapes.NNode);
+
+Geval = Shapes.system.InputMap(zeros(Shapes.NJoint,1));
 Shapes.NInput  = size(Geval,2);
 
-Shapes = BuildInertia(Shapes);
-JJ     = Shapes.Mtt/Shapes.Material.Density;
+%Shapes = BuildInertia(Shapes);
+[Jtt, Att] = Shapes.Sdf.inertia;
+
+P = eye(3);
+P = [P(:,3),P(:,1),P(:,2)];
+
+Shapes.system.Att = Att;
+Shapes.system.Jtt = P.'*Jtt*P;
+Shapes.system.Mtt = Shapes.Material.params.Rho * ...
+    blkdiag(Shapes.system.Jtt,Shapes.system.Att*eye(3));
 
 % linear approximation of the stiffness
-[~,KK] = Shapes.Material.PiollaStress(eye(3));
-KK     = 4.15*diag(voightextraction(KK));
+[~,Ktt] = Shapes.Material.PiollaStress(eye(3));
+Ktt = 4.15*diag(voightextraction(Ktt));
 
 % E  = Shapes.Material.getModulus();
 % Nu = Shapes.Material.Nu;
 % G  = E/(2*(Nu+1));
 % KK = pi*diag([G,E,E,E,G,G]);
-
-Shapes.Ktt  = diag(diag(JJ))*KK;
-Shapes.Dtt  = Shapes.Material.Damping*Shapes.Ktt;
+Jsec = blkdiag(Shapes.system.Jtt,Shapes.system.Att*eye(3));
+Shapes.system.Ktt  = diag(diag(Jsec))*Ktt;
+Shapes.system.Dtt  = Shapes.Material.params.Zeta * ...
+    Shapes.system.Ktt;
   
-if ~isempty(Shapes.Node0)
+if ~isempty(Shapes.Fem)
     Shapes = GenerateRadialFilter(Shapes);
 end
 
-if ~isempty(Shapes.PODR) || ~isempty(Shapes.PODQ)
+if ~isempty(Shapes.pod.PODR) || ~isempty(Shapes.pod.PODQ)
     
-    if length(Shapes.PODQ) ~= Shapes.NNode
+    if length(Shapes.pod.PODQ) ~= Shapes.NNode
         X = linspace(0,Shapes.Length,length(Shapes.PODQ));
-        Shapes.PODR = interp1(X,Shapes.PODR,Shapes.Sigma*Shapes.Length);
-        Shapes.PODQ = interp1(X,Shapes.PODQ,Shapes.Sigma*Shapes.Length);
+        Shapes.pod.PODR = interp1(X,Shapes.pod.PODR, ...
+            Shapes.solver.Space*Shapes.Length);
+        Shapes.pod.PODQ = interp1(X,Shapes.pod.PODQ, ...
+            Shapes.solver.Space*Shapes.Length);
     end
     
     % ensure orthonormality
-    Shapes.PODR = gsogpoly(Shapes.PODR,Shapes.Sigma);
-    Shapes.PODQ = gsogpoly(Shapes.PODQ,Shapes.Sigma);
+    if Shapes.options.isOrthonormal
+        Shapes.pod.PODR = gsogpoly(Shapes.pod.PODR,Shapes.solver.Space);
+        Shapes.pod.PODQ = gsogpoly(Shapes.pod.PODQ,Shapes.solver.Space);
+    end
     
     k = 1;
-    Shapes.POD = [];
-    for ii = 1:numel(Shapes.NModal)
-        for jj = 1:Shapes.NModal(ii)
+    Shapes.pod.POD = [];
+    for ii = 1:numel(Shapes.options.NModal)
+        for jj = 1:Shapes.options.NModal(ii)
             if ii == 1
-                Shapes.POD(:,k) = Shapes.PODR(:,jj);
+                Shapes.pod.POD(:,k) = Shapes.pod.PODR(:,jj);
             else
-                Shapes.POD(:,k) = Shapes.PODQ(:,jj);
+                Shapes.pod.POD(:,k) = Shapes.pod.PODQ(:,jj);
             end
             k = k+1;
         end
     end
     
     % rebuild shape-function matrix
-    Shapes.Theta = @(x) ShapeFunction(Shapes,x);
+    Shapes.pod.Theta = @(x) ShapeFunction(Shapes,x);
 end
 
-if ~isa(Shapes.Xi0,'function_handle')
-    Shapes.Xi0 = @(x) IntrinsicFunction(Shapes,x);   
+if ~isa(Shapes.solver.Xi0,'function_handle')
+    Shapes.solver.Xi0 = @(x) IntrinsicFunction(Shapes,x);   
 end
 
-if ~isempty(Shapes.Theta) 
+if ~isempty(Shapes.pod.Theta) 
     
 % precompute Theta matrix
-FncT = @(x) Shapes.Theta(x);
-FncX = @(x) Shapes.Xi0(x);
-s   = sort([Shapes.Sigma*Shapes.Length,...
-            Shapes.Sigma*Shapes.Length+(2/3)*Shapes.ds]);
+FncT = @(x) Shapes.pod.Theta(x);
+FncX = @(x) Shapes.solver.Xi0(x);
+s   = sort([Shapes.solver.Space*Shapes.Length,...
+            Shapes.solver.Space*Shapes.Length + ...
+            (2/3)*Shapes.solver.SpaceStep]);
 
-[nx,ny]          = size(FncT(0));
-Shapes.ThetaEval = zeros(nx,ny,numel(s));
-Shapes.Xi0Eval   = zeros(6,1,numel(s));
-Shapes.KttEval   = zeros(6,6,numel(s));
-Shapes.MttEval   = zeros(6,6,numel(s));
+[nx,ny] = size(FncT(0));
+Shapes.solver.ThetaEval = zeros(nx,ny,numel(s));
+Shapes.solver.Xi0Eval   = zeros(6,1,numel(s));
+Shapes.solver.KttEval   = zeros(6,6,numel(s));
+Shapes.solver.MttEval   = zeros(6,6,numel(s));
 
 for ii = 1:numel(s)
-    alpha = lerp(1,1-Shapes.TubeRamp,ii/numel(s));
-    Shapes.ThetaEval(:,:,ii) = FncT(s(ii));
-    Shapes.Xi0Eval(:,1,ii)   = FncX(s(ii));
-    if Shapes.RampCompensation
-        Shapes.KttEval(:,:,ii)   = (alpha)^2 * Shapes.Ktt;
-        Shapes.MttEval(:,:,ii)   = (alpha)^2 * Shapes.Mtt;
+    Shapes.solver.ThetaEval(:,:,ii) = FncT(s(ii));
+    Shapes.solver.Xi0Eval(:,1,ii)   = FncX(s(ii));
+    if Shapes.options.isRampCompensation
+        alpha = lerp(1,1-Shapes.TubeRamp,ii/numel(s));
+        Shapes.solver.KttEval(:,:,ii)   = (alpha)^2 * Shapes.system.Ktt;
+        Shapes.solver.MttEval(:,:,ii)   = (alpha)^2 * Shapes.system.Mtt;
     else
-        Shapes.KttEval(:,:,ii)   = Shapes.Ktt;
-        Shapes.MttEval(:,:,ii)   = Shapes.Mtt;
+        Shapes.solver.KttEval(:,:,ii)   = Shapes.system.Ktt;
+        Shapes.solver.MttEval(:,:,ii)   = Shapes.system.Mtt;
     end
 end
 end
 
-if ~isempty(Shapes.Muscle)
-    M = numel(Shapes.Muscle);
+if isfield(Shapes.system,'Fiber')
+    M = numel(Shapes.system.Fiber);
     N = numel(s);
     h = mean(diff(s/Shapes.Length));
     
-    Shapes.MuscleEval = zeros(N,6,M);
-    [~, P0] = computeMuscleGroups(Shapes,s/Shapes.Length);
+    Shapes.system.FiberEval = zeros(N,6,M);
+    [~, P0] = computeFiberBundle(Shapes,s/Shapes.Length);
     
     for ii = 1:M
-        
        % compute derivative along the tendon 
        [~,dP0] = gradient(P0(:,:,ii),h); 
 
-       Shapes.MuscleEval(:,1:3,ii) = P0(:,:,ii);
-       Shapes.MuscleEval(:,4:6,ii) = dP0;
+       Shapes.system.FiberEval(:,1:3,ii) = P0(:,:,ii);
+       Shapes.system.FiberEval(:,4:6,ii) = dP0;
     end
     
     Shapes.NInput = M;
 else
-   N = 2 * numel(Shapes.Sigma);
-   Shapes.MuscleEval = zeros(N,6,1);
+   N = 2 * numel(Shapes.solver.Space);
+   Shapes.system.FiberEval = zeros(N,6,1);
 end
 
 end 
@@ -604,21 +612,19 @@ end
 %--------------------------------------------------------- compute jacobian
 function [g, J] = string(Shapes,q)
     
-if numel(q) ~= Shapes.NJoint
-   error(['Dimension of joint inconstistent with POD matrix. Please ', ...
-       'check your input dimensions dim(q).']) 
-end    
+assert(numel(q) == Shapes.NJoint,['Dimension of joint inconstistent ',...
+        'with POD matrix. Please check your input dimensions dim(q).']);
 
 % ensures robustness for near-zero singularities in some PCC models
 q = q(:) + 1e-12;
 
-[g,J] = computeForwardKinematicsFast_mex(q,q*0,... % states
-    Shapes.ds,...         % spatial steps
-    Shapes.g0(1:3,4),...         % position zero
-    Shapes.g0(1:3,1:3),...       % phi zeroclc
-    Shapes.Xi0Eval,...    % intrinsic strain vector
-    Shapes.ThetaEval,...  % evaluated Theta matrix
-    Shapes.Ba);
+[g, J] = computeForwardKinematicsFast_mex(q,q*0,... % states
+    Shapes.solver.SpaceStep,...         % spatial steps
+    Shapes.solver.g0(1:3,4),...         % position zero
+    Shapes.solver.g0(1:3,1:3),...       % phi zeroclc
+    Shapes.solver.Xi0Eval,...    % intrinsic strain vector
+    Shapes.solver.ThetaEval,...  % evaluated Theta matrix
+    Shapes.solver.DofMap);
 
 
 % gtmp = zeros(4,4,Ns);    % cell(numel(Shapes.Sigma),1);
@@ -974,19 +980,19 @@ methods (Access = private)
 function P = ShapeFunction(Shapes,X)
 
     k  = 1;
-    X0 = Shapes.Sigma;
-    Pc = cell(Shapes.NDof,1); 
+    X0 = Shapes.solver.Space;
+    Pc = cell(Shapes.options.NDof,1); 
     %X  = zclamp(X,0,Shapes.Length); % make bounded
     X = zclamp(X/Shapes.Length,0,1);
 
     % construct shape-matrix 
     for jj = 1:6
-        for ii = 1:Shapes.NModal(jj)
+        for ii = 1:Shapes.options.NModal(jj)
             
             if jj < 4
-                THETA = Shapes.PODR(:,ii);   % angular strains
+                THETA = Shapes.pod.PODR(:,ii);   % angular strains
             else
-                THETA = Shapes.PODQ(:,ii);  % linear strains
+                THETA = Shapes.pod.PODQ(:,ii);  % linear strains
             end
             % not sure if interp1 is best/fastest option? 
             % maybe inverse lerp?
@@ -1000,7 +1006,7 @@ function P = ShapeFunction(Shapes,X)
 end
 %---------------------------------------------------------------------- set
 function P = IntrinsicFunction(Shapes,X)
-    P = Shapes.xia0;
+    P = Shapes.solver.Xi0;
 end
 %-------------------------------------------------- compute Cosserat string
 function Shapes = GenerateRadialFilter(Shapes)
@@ -1253,49 +1259,6 @@ Y.J   = Admap(Phi_,p_)*Shapes.Ba*Shapes.Theta(s);
 
 end
 %--------------------------------------- forwards integration of kinematics
-function Shapes = BuildInertia(Shapes)
-    
-N  = round(Shapes.NNode/1.5);
-x0 = linspace(Shapes.Sdf.BdBox(1),Shapes.Sdf.BdBox(2),N);
-y0 = linspace(Shapes.Sdf.BdBox(3),Shapes.Sdf.BdBox(4),N);
-[X0,Y0] = meshgrid(x0,y0);
-
-% get tangent-sub volume
-dv = (x0(2) - x0(1))*(y0(2) - y0(1));
-
-% generate image from cross-section
-D   = Shapes.Sdf.eval([X0(:),Y0(:)]);
-rho = (D(:,end)<1e-5);
-
-I0 = reshape(rho,[N,N]);
-
-% https://ocw.mit.edu/courses/aeronautics-and-astronautics/
-% 16-07-dynamics-fall-2009/lecture-notes/MIT16_07F09_Lec26.pdf
-x0 = x0 - Shapes.Center(1);
-y0 = y0 - Shapes.Center(2);
-X0 = X0 - Shapes.Center(1);
-Y0 = Y0 - Shapes.Center(2);
-
-% evaluate slice volume
-Shapes.Att = sum(sum(I0*dv));
-
-% evaluate 2nd-moment inertia
-Jxx = trapz(y0,trapz(x0,(Y0.^2).*I0,2))/Shapes.Att;
-Jyy = trapz(y0,trapz(x0,(X0.^2).*I0,2))/Shapes.Att;
-Jzz = trapz(y0,trapz(x0,(X0.^2 + Y0.^2).*I0,2))/Shapes.Att;
-
-Jxy = trapz(y0,trapz(x0,(X0.*Y0).*I0,2))/Shapes.Att;
-Jxz = 0*trapz(y0,trapz(x0,(X0.*Y0).*I0,2))/Shapes.Att;
-Jyz = 0*trapz(y0,trapz(x0,(X0.*Y0).*I0,2))/Shapes.Att;
-
-P = eye(3);
-P = [P(:,3),P(:,1),P(:,2)];
-
-Shapes.Jtt = P.'*[Jxx,Jxy,Jxz;Jxy,Jyy,Jyz;Jxz,Jyz,Jzz]*P;
-Shapes.Mtt = Shapes.Material.Density*blkdiag(Shapes.Jtt,Shapes.Att*eye(3));
-
-end
-%--------------------------------------- forwards integration of kinematics
 function [Fr, Wc, Wt]= computeContactWrench(Shapes,Q0,dQ0)
  
 Wc = zeros(3,Shapes.NNode);
@@ -1430,29 +1393,6 @@ end
 
 end
 %--------------------------------------------- isomorphism from R3 to so(3)
-function [P,F] = computeMuscleGroups(Shapes,s)
- 
-M = numel(Shapes.Muscle);
-P = zeros(numel(s),3,M);
-F = zeros(numel(s),3,M);
-r = Shapes.TubeRadiusA;
-if isempty(Shapes.TubeRamp)
-    R = @(x) r;
-else
-    R = @(x) r * (1 -  Shapes.TubeRamp * x);
-end
-
-Xi03 = Shapes.xia0(4:6);
-
-for ii = 1:M
-    fnc = Shapes.Muscle{ii};
-    P0  = R(s).*fnc(s);
-    P(:,:,ii) = P0.' + (s.*(Xi03(:))*Shapes.Length).';
-    F(:,:,ii) = P0.';
-end
-
-end
-
 end
 end
 
