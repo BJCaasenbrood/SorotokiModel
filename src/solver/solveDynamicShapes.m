@@ -1,6 +1,6 @@
 function Shapes = solveDynamicShapes(Shapes, varargin)
 
-    rho    = 0.5;
+    rho    = 1.0;
     alphaM = (2*rho - 1)/(rho + 1);
     alphaF = (rho)/(rho + 1);
     
@@ -15,7 +15,7 @@ function Shapes = solveDynamicShapes(Shapes, varargin)
     % preallocate solutions
     Shapes.solver.sol.yout = zeros(NSteps,Shapes.NJoint);
     Shapes.solver.sol.tout = zeros(NSteps,1);
-    step = 1;
+    Shapes.solver.SubIteration = 1;
     
     if ~isfield(Shapes.solver.sol,'ddx')
         Shapes.solver.sol.ddx = Shapes.solver.sol.dx * 0;
@@ -32,7 +32,7 @@ function Shapes = solveDynamicShapes(Shapes, varargin)
     while Shapes.solver.Time < Shapes.solver.TimeHorizon
     
         dt  = Shapes.solver.TimeStep;
-        Shapes.solver.Residual  = Inf;
+        Shapes.solver.Residual  = +Inf;
         Shapes.solver.Iteration = 1;
     
         x0   = Shapes.solver.sol.x;
@@ -57,7 +57,7 @@ function Shapes = solveDynamicShapes(Shapes, varargin)
             Shapes.solver.sol.ddx = ddx1;
             Shapes.solver.Time    = tf + dt - alphaF*dt;
     
-%            if Shapes.solver.Iteration < 50
+            % if Shapes.solver.Iteration < 50
             Shapes = Shapes.compute();
             % else
             %     Shapes = Shapes.compute('nobuild',true);
@@ -73,6 +73,7 @@ function Shapes = solveDynamicShapes(Shapes, varargin)
             % linear solve
             dfdq1 = A \ b;
     
+            % adaptive gradient descent
             if Shapes.solver.Iteration > 1
                 minL = sqrt(1+th) * lam0;
                 maxL = 0.5 * norm(ddxf_ - ddx0)/norm(dfdq1 - dfdq0);
@@ -93,9 +94,10 @@ function Shapes = solveDynamicShapes(Shapes, varargin)
 
         progBar([], [], []);
 
+        step = Shapes.solver.SubIteration;
         Shapes.solver.sol.yout(step,:) = Shapes.solver.sol.x;
         Shapes.solver.sol.tout(step)   = Shapes.solver.Time;
-        step = step + 1;
+        Shapes.solver.SubIteration = Shapes.solver.SubIteration + 1;
     
         Shapes.solver.Time = clamp(tf + Shapes.solver.TimeStep,...
             0,Shapes.solver.TimeHorizon);
@@ -105,7 +107,9 @@ function Shapes = solveDynamicShapes(Shapes, varargin)
             ((1 - 2*beta)*ddxf + 2 * beta * ddx0);
 
         % if ~isempty(Shapes.options.Display)
-        %     Shapes = Shapes.options.Display(Shapes);
+        Shapes = Shapes.options.Display(Shapes);
+        % view(30,30);
+        % axis([-20,60,-20,20,-100,20]);
         % end
     end
 

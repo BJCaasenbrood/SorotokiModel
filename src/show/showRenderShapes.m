@@ -1,9 +1,9 @@
 function Shapes = showRenderShapes(Shapes,varargin)
 
-TubeRadiusA = 5;
-TubeRadiusB = 5;
-TubeRadiusAlpha = 1e-6;
-TubeRamp = 0.8;
+TubeRadiusA = Shapes.geometry.TubeRadiusA;
+TubeRadiusB =  Shapes.geometry.TubeRadiusB;
+TubeAlpha =  Shapes.geometry.TubeRadiusAlpha;
+TubeRamp =  Shapes.geometry.TubeRamp;
 
 if nargin < 2
     q = Shapes.solver.sol.x;
@@ -24,7 +24,7 @@ Stretch = L/Shapes.Length;
 [x,y,z] = rtubeplot(Node.',...
     TubeRadiusA,...
     TubeRadiusB,...
-    TubeRadiusAlpha,...
+    TubeAlpha,...
     16,1e-6,...
     TubeRamp*(Stretch));
 
@@ -33,7 +33,7 @@ v = fv.vertices;
 f = fv.faces;
 
 if isempty(Shapes.Gmodel)
-    Shapes.Gmodel = Gmodel(v,f);
+    Shapes.Gmodel = Gmodel(v,f,'Texture',Shapes.options.Texture);
     Shapes.Gmodel.render();
 else
     Shapes.Gmodel.Node = v;

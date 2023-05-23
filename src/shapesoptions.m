@@ -30,7 +30,7 @@ classdef shapesoptions
             obj.Color               = [32, 129, 191]/255;
             obj.ColorMap            = cmap_turbo;
             obj.Display             = true;
-            obj.ColorMap            = cmap_turbo;
+            obj.Texture             = matcap_bluebase;
             obj.ColorAxis           = [];
             obj.LineStyle           = '-';
             obj.isAssembled         = false;

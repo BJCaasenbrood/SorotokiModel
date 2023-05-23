@@ -7,12 +7,14 @@ function Shapes = assembleBoundaryShapes(Shapes)
     
     % adding controller loads
     if isfield(Shapes.system,'Controller') 
-         F = Shapes.system.Controller(Shapes);
+         u = Shapes.system.Controller(Shapes);
+         G = Shapes.system.InputMap(Shapes);
+         F = G * u;
     end
     
     % adding contact loads
     if isfield(Shapes.system,'Contact') 
-        [Fnc, Ftc, Knc, Ktc] = assembleContactShapes(Shapes);
+        [Fnc, Ftc, Knc, Ktc]  = assembleContactShapes(Shapes);
         Shapes.system.Tangent = Shapes.system.Tangent + Knc + Ktc; 
     end
         
