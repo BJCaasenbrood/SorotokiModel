@@ -12,6 +12,7 @@ classdef shapesoptions
         ColorAxis;
         Texture;
         Display;
+        GmodelOptions;
         LineStyle;
         isAssembled;
         isOrthonormal;
@@ -40,6 +41,7 @@ classdef shapesoptions
             obj.ContactDistance     = 1e-3;
             obj.isRampCompensation  = false;
             obj.isOrthonormal       = true;
+            obj.GmodelOptions       = {};
         end
     end
 end

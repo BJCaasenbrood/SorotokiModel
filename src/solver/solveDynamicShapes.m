@@ -8,14 +8,8 @@ function Shapes = solveDynamicShapes(Shapes, varargin)
     beta  = 0.25*(1 - alphaM + alphaF)^2;
     
     NSteps = round(Shapes.solver.TimeHorizon/Shapes.solver.TimeStep);
-    progBar = ProgressBar(NSteps + 1,'Title', 'Solve dynamic FEM');
-
+    progBar = ProgressBar(NSteps,'Title', 'Solve dynamic FEM');
     Shapes.solver.Time = 0;
-
-    % preallocate solutions
-    Shapes.solver.sol.yout = zeros(NSteps,Shapes.NJoint);
-    Shapes.solver.sol.tout = zeros(NSteps,1);
-    Shapes.solver.SubIteration = 1;
     
     if ~isfield(Shapes.solver.sol,'ddx')
         Shapes.solver.sol.ddx = Shapes.solver.sol.dx * 0;
@@ -28,6 +22,11 @@ function Shapes = solveDynamicShapes(Shapes, varargin)
         Shapes.solver.sol.ddx = A \ b;
     end
     
+        % preallocate solutions
+    Shapes.solver.sol.yout = zeros(NSteps,Shapes.NJoint);
+    Shapes.solver.sol.vout = zeros(NSteps,Shapes.NJoint);
+    Shapes.solver.sol.tout = zeros(NSteps,1);
+    Shapes.solver.SubIteration = 1;
     
     while Shapes.solver.Time < Shapes.solver.TimeHorizon
     
@@ -57,11 +56,11 @@ function Shapes = solveDynamicShapes(Shapes, varargin)
             Shapes.solver.sol.ddx = ddx1;
             Shapes.solver.Time    = tf + dt - alphaF*dt;
     
-            % if Shapes.solver.Iteration < 50
-            Shapes = Shapes.compute();
-            % else
-            %     Shapes = Shapes.compute('nobuild',true);
-            % end
+            if Shapes.solver.Iteration < 200
+                Shapes = Shapes.compute();
+            else
+                Shapes = Shapes.compute('nobuild',true);
+            end
     
             A = (1-alphaF) * beta * dt*dt * Shapes.system.Tangent + ...
                 (1-alphaF) * gamma * dt * Shapes.system.Damping + ...
@@ -96,6 +95,7 @@ function Shapes = solveDynamicShapes(Shapes, varargin)
 
         step = Shapes.solver.SubIteration;
         Shapes.solver.sol.yout(step,:) = Shapes.solver.sol.x;
+        Shapes.solver.sol.vout(step,:) = Shapes.solver.sol.dx;
         Shapes.solver.sol.tout(step)   = Shapes.solver.Time;
         Shapes.solver.SubIteration = Shapes.solver.SubIteration + 1;
     
@@ -106,14 +106,12 @@ function Shapes = solveDynamicShapes(Shapes, varargin)
         Shapes.solver.sol.x  = x0 + dt * dx0 + 0.5 * dt*dt * ...
             ((1 - 2*beta)*ddxf + 2 * beta * ddx0);
 
-        % if ~isempty(Shapes.options.Display)
-        Shapes = Shapes.options.Display(Shapes);
-        % view(30,30);
-        % axis([-20,60,-20,20,-100,20]);
-        % end
+        if ~isempty(Shapes.options.Display)
+            Shapes = Shapes.options.Display(Shapes);
+        end
     end
 
-    progBar.release();
+    %progBar.release();
     fprintf('\n');
-    
+
 end

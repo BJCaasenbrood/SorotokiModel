@@ -8,8 +8,9 @@ for ii = 1:M
 end
 
 % % ensure its orthonormal (gram–schmidt)
-% if isempty(varargin)
-%     Y = gsogpoly(Y,X);
-% end
+if ~isempty(varargin) 
+    Y = gsogpoly(Y,X);
+end
+
 end
 

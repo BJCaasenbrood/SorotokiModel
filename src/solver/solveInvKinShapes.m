@@ -8,7 +8,12 @@ function Shapes = solveInvKinShapes(Shapes,varargin)
 
     rho = Shapes.solver.Regularization;
     x0 = Shapes.solver.sol.x + 1e-5;
-    pd = Shapes.system.Setpoint{2}(1);
+
+    if ~isempty(varargin)
+        pd = varargin{1};
+    else
+        pd = Shapes.system.Setpoint{2}(1);
+    end
 
     while norm(Shapes.solver.Residual) > Shapes.solver.RelTolerance && ...
         Shapes.solver.Iteration < Shapes.solver.MaxIteration 
@@ -17,9 +22,16 @@ function Shapes = solveInvKinShapes(Shapes,varargin)
         pos    = backbone(g);
     
         if isempty(Ceq)
-            b = (pos(end,:)).' - pd(:);
-            Q = J(4:6,:,end);
-            A = Q * Q.' + rho.^2 * eye(3); 
+            if numel(pd) == 3
+                b = (pos(end,:)).' - pd(:);
+                Q = J(4:6,:,end);
+                A = Q * Q.' + rho.^2 * eye(3); 
+            else
+                b = 50*wedge(logmapSE3(g(:,:,end)\pd));
+                b = kron([0,0;0,1],eye(3)) * b;
+                Q = J(:,:,end);
+                A = Q * Q.' + rho.^2 * eye(6); 
+            end
         else
 
         end
@@ -36,11 +48,11 @@ function Shapes = solveInvKinShapes(Shapes,varargin)
             th   = +Inf;
         end
 
-        if  Shapes.solver.Display && (mod(Shapes.solver.Iteration,Shapes.solver.DisplayAtEvery) == 0 || ...
-            Shapes.solver.Iteration == 1)
+        % if  Shapes.solver.Display && (mod(Shapes.solver.Iteration,Shapes.solver.DisplayAtEvery) == 0 || ...
+        %     Shapes.solver.Iteration == 1)
 
-            log(Shapes.solver.Iteration, norm(b), lam1 + 1e-6);
-        end
+        %     log(Shapes.solver.Iteration, norm(b), lam1 + 1e-6);
+        % end
 
         if norm(Shapes.solver.Residual - b) <= Shapes.solver.RelTolerance
             Shapes.solver.Bisection = Shapes.solver.Bisection + 1;
@@ -60,10 +72,10 @@ function Shapes = solveInvKinShapes(Shapes,varargin)
         lam0 = lam1;
     end
     
-    if  Shapes.solver.Display
-        log(Shapes.solver.Iteration, norm(b), lam1 + 1e-6);
-        fprintf('\n');
-    end 
+    % if  Shapes.solver.Display
+    %     log(Shapes.solver.Iteration, norm(b), lam1 + 1e-6);
+    %     fprintf('\n');
+    % end 
 end
 
 function log(ii,f,g)

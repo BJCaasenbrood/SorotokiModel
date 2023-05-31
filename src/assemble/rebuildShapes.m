@@ -67,7 +67,6 @@ if ~isempty(Shapes.system.pod.PODR) || ~isempty(Shapes.system.pod.PODQ)
     end
     
     k = 1;
-    Shapes.pod.POD = [];
     for ii = 1:numel(Shapes.options.NModal)
         for jj = 1:Shapes.options.NModal(ii)
             if ii == 1

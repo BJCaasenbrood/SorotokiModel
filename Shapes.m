@@ -1,22 +1,21 @@
 classdef Shapes
 
     properties (Access = public)
-        Sdf;
-        Fem;
-        Gmodel;
-        Material;
+        Sdf;        % (if assigned) SDF model
+        Fem;        % (if assigned) Fem model
+        Gmodel;     % Rendering model
+        Material;   % Materials properties
 
-        options;
-        beamsolver;
-        geometry;
-        solver;
-        system;
-        pod;
+        options;    % general options
+        beamsolver; % structural solver (pre-compute)
+        geometry;   % geometry information of shape
+        solver;     % dynamic solver 
+        system;     % system struct
 
-        Length;     
+        Length;     % Length of the soft shape
         NDim;       % State dimensions
         NJoint;     % Joint dimension (i.e, NDim/2)
-        NInput;
+        NInput;     % Input dimension 
         NNode;      % Number of nodes (spatial discretization)
     end
    
@@ -46,9 +45,6 @@ function obj = Shapes(Input,NModal,varargin)
     obj.beamsolver.SpaceStep = obj.Length/(obj.NNode);
     
     obj.system.Gravity = zeros(3,1);
-
-    % cross-section SDF
-    %obj.Sdf      = sCircle(5);
     obj.Material = NeoHookean(0.33,0.33);
     
     obj.options.FilterRadius        = 10;
@@ -108,6 +104,12 @@ function Shapes = setRadius(Shapes,varargin)
       Shapes.geometry.TubeRadiusA = R(1);
       Shapes.geometry.TubeRadiusB = R(2);  
       Shapes.geometry.TubeRamp = R(3);
+    elseif numel(varargin) == 1 && numel(varargin{1}) == 4
+        R = varargin{1};
+        Shapes.geometry.TubeRadiusA = R(1);
+        Shapes.geometry.TubeRadiusB = R(2);  
+        Shapes.geometry.TubeRamp    = R(3);      
+        Shapes.geometry.TubeAlpha   = R(4);      
    end
    
    Shapes.geometry.Sdf = sCircle(Shapes.geometry.TubeRadiusA);
@@ -134,6 +136,7 @@ function Shapes = addSetpoint(Shapes,varargin)
         %varargin{1} = findNodeMesh(Shapes.Mesh.Node,varargin{1});
     end
     Shapes = addSetpointShapes(Shapes,varargin{1:end});
+
 end
 %-------------------------------------------------------------- set gravity 
 function Shapes = addGravity(Shapes,varargin)
@@ -165,6 +168,10 @@ end
 function Shapes = rebuild(Shapes,varargin)
     Shapes = rebuildShapes(Shapes);
 end 
+%--------------------------------------------------- increment dynamic time
+function Shapes = update_states(Shapes)
+    Shapes = updateStatesShapes(Shapes);
+end
 %--------------------------------------------------------- compute jacobian
 function [g, J] = string(Shapes,q)
     
@@ -206,18 +213,17 @@ Shapes.system.fResidual = Shapes.system.fElastic + Shapes.system.fDamping ...
 end
 %--------------------------------------------------------- compute jacobian
 function [dx, Shapes] = flow(Shapes,q,varargin)
+
+t = 0;
+u = zeros(Shapes.NInput,1);    
 if ~isempty(varargin)
     u = varargin{1}(:);
     t = varargin{2}(:);
-else
-    t = 0;
-    u = zeros(Shapes.NInput,1);
 end
 
+Build = true;
 if numel(varargin) == 3
-    Build = varargin{3};
-else
-    Build = true;
+    Build = varargin{3};  
 end
     
 NQ   = Shapes.NJoint;
