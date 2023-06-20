@@ -1,4 +1,4 @@
-function Shapes = solveInvKinShapes(Shapes,varargin)
+function [Shapes, x1] = solveInvKinShapes(Shapes,varargin)
 
     Ceq  = [];
     lam0 = 1;
@@ -7,10 +7,17 @@ function Shapes = solveInvKinShapes(Shapes,varargin)
     Shapes.solver.Iteration    = 1;
 
     rho = Shapes.solver.Regularization;
-    x0 = Shapes.solver.sol.x + 1e-5;
+    x0 = Shapes.solver.sol.x;
 
     if ~isempty(varargin)
-        pd = varargin{1};
+        nd = Shapes.NNode;
+        pd = varargin{1}
+        I  = round(linspace(0,nd,1+size(pd,1)));
+        I  = I(2:end);
+
+        if numel(varargin) > 1
+            I = varargin{2};
+        end
     else
         pd = Shapes.system.Setpoint{2}(1);
     end
@@ -18,30 +25,34 @@ function Shapes = solveInvKinShapes(Shapes,varargin)
     while norm(Shapes.solver.Residual) > Shapes.solver.RelTolerance && ...
         Shapes.solver.Iteration < Shapes.solver.MaxIteration 
 
+        dfdq1 = 0;
         [g, J] = Shapes.string(Shapes.solver.sol.x);
         pos    = backbone(g);
-    
-        if isempty(Ceq)
-            if numel(pd) == 3
-                b = (pos(end,:)).' - pd(:);
-                Q = J(4:6,:,end);
-                A = Q * Q.' + rho.^2 * eye(3); 
+
+        for ii = 1:numel(I)
+            if isempty(Ceq)
+                if numel(pd(ii,:)) == 3
+                    b = (pos(I(ii),:)).' - pd(ii,:).';
+                    Q = J(4:6,:,I(ii));
+                    A = Q * Q.' + rho.^2 * eye(3);
+                else
+                    b = 50*wedge(logmapSE3(g(:,:,end)\pd));
+                    b = kron([0,0;0,1],eye(3)) * b;
+                    Q = J(:,:,end);
+                    A = Q * Q.' + rho.^2 * eye(6);
+                end
             else
-                b = 50*wedge(logmapSE3(g(:,:,end)\pd));
-                b = kron([0,0;0,1],eye(3)) * b;
-                Q = J(:,:,end);
-                A = Q * Q.' + rho.^2 * eye(6); 
+                % ....
             end
-        else
 
+            %dfdq1 = dfdq1 + Q.' * (A \ b);
+            dfdq1 = dfdq1 + (1/rho.^3) * Q.' * b;
         end
-
-        dfdq1 = Q.' * (A \ b);
 
         if Shapes.solver.Iteration > 1
             minL = sqrt(1+th) * lam0;
             maxL = 0.5 * norm(x1 - x0)/norm(dfdq1 - dfdq0);
-            lam1 = clamp(min([minL, maxL]),1e-6,+Inf);
+            lam1 = clamp(min([minL, maxL]),0,Inf);
             th   = lam1/lam0;
         else
             lam1 = lam0;
@@ -78,10 +89,10 @@ function Shapes = solveInvKinShapes(Shapes,varargin)
     % end 
 end
 
-function log(ii,f,g)
-    if ii < 2
-        fprinttable({'Iteration','Residual','lambda'}, [ii, f,g],'open',true);
-    else
-        fprinttable({'Iteration','Residual','lambda'}, [ii,f,g], 'addrow',true,'open',true);
-    end
-end
+% function log(ii,f,g)
+%     if ii < 2
+%         fprinttable({'Iteration','Residual','lambda'}, [ii, f,g],'open',true);
+%     else
+%         fprinttable({'Iteration','Residual','lambda'}, [ii,f,g], 'addrow',true,'open',true);
+%     end
+% end

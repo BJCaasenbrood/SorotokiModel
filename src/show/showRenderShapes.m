@@ -1,9 +1,9 @@
 function Shapes = showRenderShapes(Shapes,varargin)
 
 TubeRadiusA = Shapes.geometry.TubeRadiusA;
-TubeRadiusB =  Shapes.geometry.TubeRadiusB;
-TubeAlpha =  Shapes.geometry.TubeRadiusAlpha;
-TubeRamp =  Shapes.geometry.TubeRamp;
+TubeRadiusB = Shapes.geometry.TubeRadiusB;
+TubeAlpha   = Shapes.geometry.TubeRadiusAlpha;
+TubeRamp    = Shapes.geometry.TubeRamp;
 
 if nargin < 2
     q = Shapes.solver.sol.x;
@@ -25,7 +25,7 @@ Stretch = L/Shapes.Length;
     TubeRadiusA,...
     TubeRadiusB,...
     TubeAlpha,...
-    32,1e-6,...
+    16,1e-6,...
     TubeRamp*(Stretch));
 
 fv = surf2patch(x,y,z,'triangles');
@@ -33,10 +33,8 @@ v = fv.vertices;
 f = fv.faces;
 
 if isempty(Shapes.Gmodel)
-    Shapes.Gmodel = Gmodel(v,f,'Texture',Shapes.options.Texture,...
-    Shapes.options.GmodelOptions{:});
-    Shapes.Gmodel = Shapes.Gmodel.bake();
-    Shapes.Gmodel = Shapes.Gmodel.render();
+    Shapes.Gmodel = Gmodel(v,f,'Texture',Shapes.options.Texture,'Alpha',Shapes.options.Alpha);
+    Shapes.Gmodel.render();
 else
     Shapes.Gmodel.Node = v;
     Shapes.Gmodel.update();
