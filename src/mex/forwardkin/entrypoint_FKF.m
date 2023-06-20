@@ -10,7 +10,7 @@ end
 
 Modes = [0,M,0,M,0,0];   % curvature-elongation
 
-shp = Shapes(Y,Modes,'L0',L);
+shp = Shapes(Y,Modes,'Length',L);
 
 % shp.E    = 5.00;    % Young's modulus in Mpa
 % shp.Nu   = 0.49;     % Poisson ratio
@@ -19,9 +19,9 @@ shp = Shapes(Y,Modes,'L0',L);
 % shp = shp.rebuild();
 
 %% eval theta
-Fnc = @(x) shp.Theta(x);
-s   = sort([shp.Sigma*shp.L0,...
-            shp.Sigma*shp.L0+(2/3)*shp.ds]);
+Fnc = @(x) shp.system.pod.Theta(x);
+s   = sort([shp.beamsolver.Space*shp.Length,...
+            shp.beamsolver.Space*shp.Length+(2/3)*shp.beamsolver.SpaceStep]);
 
 [nx,ny] = size(Fnc(0));
 Theta   = zeros(nx,ny,numel(s));
@@ -36,8 +36,8 @@ end
 %% entries
 x    = 0.01*rand(shp.NDim,1);
 dx   = 0.01*rand(shp.NDim,1);
-Ba   = shp.Ba;
-ds   = shp.ds;
+Ba   = shp.beamsolver.DofMap;
+ds   = shp.beamsolver.SpaceStep;
 p0   = zeros(3,1);
 Phi0 = eye(3);
 xia0 = Xi0;

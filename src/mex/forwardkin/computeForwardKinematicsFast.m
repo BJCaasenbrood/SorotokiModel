@@ -8,9 +8,9 @@ function [gtmp,Jtmp,vtmp] = computeForwardKinematicsFast(x,dx,... % states
     Ba)         % state to strain matrix        
 
 % compute total length
-Ns   = (size(Th,3)/2);
-n    = numel(x);
-s    = 0;
+Ns = (size(Th,3)/2);
+n = numel(x);
+s = 0;
 
 Z1 = zeros(6,5+n-1);
 Z1(1:3,1:3) = Phi0;
@@ -52,6 +52,12 @@ function [dZ1] = ForwardODEX(x,Z1,Theta,xia0,Ba)
 n     = numel(x);
 p_    = Z1(1:3,4);
 Phi_  = Z1(1:3,1:3);
+
+for ii = 1:2
+    Phi_(:,ii) = Phi_(:,ii) ./ norm(Phi_(:,ii));
+end
+
+Phi_(:,3) = isomSO3(Phi_(:,1)) * Phi_(:,2);
 
 BTh = Ba*Theta;
 XI  = BTh*x + xia0;

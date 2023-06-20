@@ -1,21 +1,22 @@
 classdef Shapes
 
     properties (Access = public)
-        Sdf;        % (if assigned) SDF model
-        Fem;        % (if assigned) Fem model
-        Gmodel;     % Rendering model
-        Material;   % Materials properties
+        Sdf;
+        Fem;
+        Gmodel;
+        Material;
 
-        options;    % general options
-        beamsolver; % structural solver (pre-compute)
-        geometry;   % geometry information of shape
-        solver;     % dynamic solver 
-        system;     % system struct
+        options;
+        beamsolver;
+        geometry;
+        solver;
+        system;
+        pod;
 
-        Length;     % Length of the soft shape
+        Length;     
         NDim;       % State dimensions
         NJoint;     % Joint dimension (i.e, NDim/2)
-        NInput;     % Input dimension 
+        NInput;
         NNode;      % Number of nodes (spatial discretization)
     end
    
@@ -30,7 +31,7 @@ function obj = Shapes(Input,NModal,varargin)
     obj.geometry   = geometryoptions;
     obj.system     = struct;
     obj.system.pod = struct;
-
+    
     obj.options.NModal = NModal;
     obj.options.Table  = double(NModal > 0); 
     obj.options.NDof   = sum(obj.options.Table);
@@ -45,6 +46,9 @@ function obj = Shapes(Input,NModal,varargin)
     obj.beamsolver.SpaceStep = obj.Length/(obj.NNode);
     
     obj.system.Gravity = zeros(3,1);
+
+    % cross-section SDF
+    %obj.Sdf      = sCircle(5);
     obj.Material = NeoHookean(0.33,0.33);
     
     obj.options.FilterRadius        = 10;
@@ -52,7 +56,7 @@ function obj = Shapes(Input,NModal,varargin)
     obj.options.isVolumetricContact = true;
     obj.options.isRampCompensation  = false;
     obj.solver.Regularization       = 333;
-    obj.solver.MaxIteration         = 30;
+    obj.solver.MaxIteration         = 100;
     obj.options.Texture = matcap_bluebase;
 
     obj = vararginParser(obj,varargin{:});
@@ -104,12 +108,12 @@ function Shapes = setRadius(Shapes,varargin)
       Shapes.geometry.TubeRadiusA = R(1);
       Shapes.geometry.TubeRadiusB = R(2);  
       Shapes.geometry.TubeRamp = R(3);
-    elseif numel(varargin) == 1 && numel(varargin{1}) == 4
-        R = varargin{1};
-        Shapes.geometry.TubeRadiusA = R(1);
-        Shapes.geometry.TubeRadiusB = R(2);  
-        Shapes.geometry.TubeRamp    = R(3);      
-        Shapes.geometry.TubeAlpha   = R(4);      
+   elseif numel(varargin) == 1 && numel(varargin{1}) == 4
+      R = varargin{1};
+      Shapes.geometry.TubeRadiusA = R(1);
+      Shapes.geometry.TubeRadiusB = R(2);  
+      Shapes.geometry.TubeRamp = R(3);
+      Shapes.geometry.TubeRadiusAlpha = R(4);
    end
    
    Shapes.geometry.Sdf = sCircle(Shapes.geometry.TubeRadiusA);
@@ -136,7 +140,6 @@ function Shapes = addSetpoint(Shapes,varargin)
         %varargin{1} = findNodeMesh(Shapes.Mesh.Node,varargin{1});
     end
     Shapes = addSetpointShapes(Shapes,varargin{1:end});
-
 end
 %-------------------------------------------------------------- set gravity 
 function Shapes = addGravity(Shapes,varargin)
@@ -161,17 +164,17 @@ function Shapes = addContact(Shapes,varargin)
     Shapes = addContactShapes(Shapes,varargin{1:end});
 end
 %--------------------------------------------------------------- add muscle
-function Shapes = addMuscle(Shapes,varargin)
-    Shapes.Muscle{end+1} = varargin{1};
+function Shapes = addActuator(Shapes,varargin)
+    if ~isfield(Shapes.system,'Actuator')
+        Shapes.system.Actuator = {varargin{1}};
+    else
+        Shapes.system.Actuator{end+1,1} = varargin{1};
+    end
 end
 %------------------------------------------------------------ set reference
 function Shapes = rebuild(Shapes,varargin)
     Shapes = rebuildShapes(Shapes);
 end 
-%--------------------------------------------------- increment dynamic time
-function Shapes = update_states(Shapes)
-    Shapes = updateStatesShapes(Shapes);
-end
 %--------------------------------------------------------- compute jacobian
 function [g, J] = string(Shapes,q)
     
@@ -208,22 +211,24 @@ end
 Shapes = assembleBoundaryShapes(Shapes);
 
 Shapes.system.fResidual = Shapes.system.fElastic + Shapes.system.fDamping ... 
-    + Shapes.system.fCoriolis - Shapes.system.fInput + Shapes.system.fBody;
+    + Shapes.system.fCoriolis - Shapes.system.fInput + Shapes.system.fBody ...
+    - Shapes.system.fDrag;
 
 end
 %--------------------------------------------------------- compute jacobian
 function [dx, Shapes] = flow(Shapes,q,varargin)
-
-t = 0;
-u = zeros(Shapes.NInput,1);    
 if ~isempty(varargin)
     u = varargin{1}(:);
     t = varargin{2}(:);
+else
+    t = 0;
+    u = zeros(Shapes.NInput,1);
 end
 
-Build = true;
 if numel(varargin) == 3
-    Build = varargin{3};  
+    Build = varargin{3};
+else
+    Build = true;
 end
     
 NQ   = Shapes.NJoint;

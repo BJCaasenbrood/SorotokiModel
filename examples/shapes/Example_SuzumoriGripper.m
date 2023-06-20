@@ -1,13 +1,13 @@
 clr;
 sdf  = sCylinder(0,0,0,30,28).translate([0,0,-65]);
-obj  = Gmodel('Suzumori_Beam.stl','Texture',matcap_polishedaluminium,'Shading','Face');
-obj2 = Gmodel('Suzumori_Holder_Grippers.stl','Texture',matcap_metalclean * 0.65,'Shading','Face');
-figure(101); view(30,10);
-obj = obj.bake.render();
-obj2 = obj2.bake.render();
+% obj  = Gmodel('Suzumori_Beam.stl','Texture',matcap_polishedaluminium,'Shading','Face');
+% obj2 = Gmodel('Suzumori_Holder_Grippers.stl','Texture',matcap_metalclean * 0.65,'Shading','Face');
+% figure(101); view(30,10);
+% obj = obj.bake.render();
+% obj2 = obj2.bake.render();
 
-gripper = {obj;obj2}; 
-clearvars obj obj2
+% gripper = {obj; obj2}; 
+% clearvars obj obj2
 
 Y = chebyspace(50,2);
 
