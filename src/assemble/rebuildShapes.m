@@ -36,15 +36,22 @@ Shapes.beamsolver.Mtt = Shapes.Material.params.Rho * ...
 % linear approximation of the stiffness
 [~,Ktt] = Shapes.Material.PiollaStress(eye(3));
 Ktt = 4.15*diag(voightextraction(Ktt));
-
 % E  = Shapes.Material.getModulus();
 % Nu = Shapes.Material.Nu;
 % G  = E/(2*(Nu+1));
 % KK = pi*diag([G,E,E,E,G,G]);
 Jsec = blkdiag(Shapes.beamsolver.Jtt,Shapes.beamsolver.Att*eye(3));
 Shapes.beamsolver.Ktt = diag(diag(Jsec))*Ktt;
-Shapes.beamsolver.Dtt = Shapes.Material.params.Zeta * ...
-    Shapes.beamsolver.Ktt;
+Dsec = blkdiag(zeros(3),diag([0.1,1,1]) * Shapes.beamsolver.Att*eye(3));
+
+if isfield(Shapes.system,'Drag')
+    Shapes.beamsolver.Dtt = diag(diag(Dsec)) * Shapes.system.Drag;
+else
+    Shapes.beamsolver.Dtt = diag(diag(Dsec))*0;
+end
+
+% Shapes.beamsolver.Dtt = Shapes.Material.params.Zeta * ...
+%     Shapes.beamsolver.Ktt;
   
 if ~isempty(Shapes.Fem)
     Shapes = GenerateRadialFilter(Shapes);
@@ -67,6 +74,7 @@ if ~isempty(Shapes.system.pod.PODR) || ~isempty(Shapes.system.pod.PODQ)
     end
     
     k = 1;
+    Shapes.pod.POD = [];
     for ii = 1:numel(Shapes.options.NModal)
         for jj = 1:Shapes.options.NModal(ii)
             if ii == 1
@@ -100,6 +108,7 @@ Shapes.beamsolver.ThetaEval = zeros(nx,ny,numel(s));
 Shapes.beamsolver.Xi0Eval   = zeros(6,1,numel(s));
 Shapes.beamsolver.KttEval   = zeros(6,6,numel(s));
 Shapes.beamsolver.MttEval   = zeros(6,6,numel(s));
+Shapes.beamsolver.DttEval   = zeros(6,6,numel(s));
 
 for ii = 1:numel(s)
     Shapes.beamsolver.ThetaEval(:,:,ii) = FncT(s(ii));
@@ -109,36 +118,48 @@ for ii = 1:numel(s)
         alpha = lerp(1,1-TubeRamp,ii/numel(s));
         Shapes.beamsolver.KttEval(:,:,ii)   = (alpha)^2 * Shapes.beamsolver.Ktt;
         Shapes.beamsolver.MttEval(:,:,ii)   = (alpha)^2 * Shapes.beamsolver.Mtt;
+        Shapes.beamsolver.DttEval(:,:,ii)   = (alpha)^2 * Shapes.beamsolver.Dtt;
     else
         Shapes.beamsolver.KttEval(:,:,ii)   = Shapes.beamsolver.Ktt;
         Shapes.beamsolver.MttEval(:,:,ii)   = Shapes.beamsolver.Mtt;
+        Shapes.beamsolver.DttEval(:,:,ii)   = Shapes.beamsolver.Dtt;
     end
 end
 end
 
-if isfield(Shapes.system,'Fiber')
-    M = numel(Shapes.system.Fiber);
+if isfield(Shapes.system,'Actuator')
+    M = numel(Shapes.system.Actuator);
     N = numel(s);
     h = mean(diff(s/Shapes.Length));
     
     Shapes.system.FiberEval = zeros(N,6,M);
-    [~, P0] = computeFiberBundle(Shapes,s/Shapes.Length);
+    [P0, F0] = assembleActuatorGroupShapes(Shapes,s/Shapes.Length);
+
+    for ii = 1:M
+        Shapes.system.ActuatorMesh{ii} = zeros(4,4,numel(s));
+    for jj = 1:numel(s)
+        Shapes.system.ActuatorMesh{ii}(1:3,4,jj) = P0(jj,1:3);
+        Shapes.system.ActuatorMesh{ii}(1:3,1:3,jj) = Shapes.beamsolver.g0(1:3,1:3);
+    end
+    end
     
     for ii = 1:M
-       % compute derivative along the tendon 
-       [~,dP0] = gradient(P0(:,:,ii),h); 
+       % compute derivative along the actuator direction 
+       [~,dP0] = gradient(F0(:,:,ii),h); 
 
-       Shapes.system.FiberEval(:,1:3,ii) = P0(:,:,ii);
-       Shapes.system.FiberEval(:,4:6,ii) = dP0;
+       %dN0 = dP0 ./ (vecnorm(F0,2,2) + 1e-6);
+       Shapes.beamsolver.ActuatorEval(:,1:3,ii) = F0(:,:,ii);
+       Shapes.beamsolver.ActuatorEval(:,4:6,ii) = dP0;
     end
     
     Shapes.NInput = M;
 else
    N = 2 * numel(Shapes.beamsolver.Space);
-   Shapes.beamsolver.FiberEval = zeros(N,6,1);
+   Shapes.beamsolver.ActuatorEval = zeros(N,6,1);
 end
 
 Shapes = assembleContactMeshShapes(Shapes);
+Shapes = assembleSelfContactEdge(Shapes);
 Shapes = compute(Shapes);
 
 end

@@ -11,11 +11,13 @@ classdef shapesoptions
         ColorMap;
         ColorAxis;
         Texture;
+        Alpha;
         Display;
-        GmodelOptions;
         LineStyle;
         isAssembled;
         isOrthonormal;
+        isSelfContact;
+        loadingFactor;
 
         FilterRadius;
         isVolumetricContact;
@@ -32,16 +34,18 @@ classdef shapesoptions
             obj.ColorMap            = cmap_turbo;
             obj.Display             = true;
             obj.Texture             = matcap_bluebase;
+            obj.Alpha               = 1.0;
             obj.ColorAxis           = [];
             obj.LineStyle           = '-';
             obj.isAssembled         = false;
             obj.Texture             = []; 
+            obj.loadingFactor       = []; 
             obj.FilterRadius        = 10;
             obj.isVolumetricContact = true;
             obj.ContactDistance     = 1e-3;
-            obj.isRampCompensation  = false;
+            obj.isRampCompensation  = true;
             obj.isOrthonormal       = true;
-            obj.GmodelOptions       = {};
+            obj.isSelfContact       = false;
         end
     end
 end

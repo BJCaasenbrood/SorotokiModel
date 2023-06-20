@@ -77,6 +77,5 @@ function [Fnc, Ftc, Knc, Ktc] = assembleContactShapes(Shapes)
             Knc = Knc + omegaN * kk * (kk).';
             Ktc = Ktc + omegaT * tt * (tt).';
         end
-    
     end
 end

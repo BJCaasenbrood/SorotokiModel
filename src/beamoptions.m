@@ -31,7 +31,7 @@ classdef beamoptions
         Dtt;
 
         ThetaEval;
-        FiberEval;
+        ActuatorEval;
         Xi0Eval;
         KttEval;
         MttEval;
