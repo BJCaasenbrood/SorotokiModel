@@ -55,12 +55,9 @@ function [Shapes, x1] = solveInvKinShapes(Shapes,varargin)
                 dfdq1 = dfdq1 + Q.' * ( A \ b );
             end
     
-            if isfield(Shapes.system,'SubTask')
-                alpha = (1/rho.^3);
-                Qpinv = Q.' / (A);
-                grad = Shapes.system.SubTask(Shapes);
-
-                dfdq1 = dfdq1 + alpha * (eye(Shapes.NJoint) - Qpinv * Q) * grad;
+            if isfield(shp.system.SubTask)
+                Qpinv = Q.' * inv(A)
+                dfdq1 = dfdq1 + (In - Qpinv * Q) * grad;
             end
         end
 

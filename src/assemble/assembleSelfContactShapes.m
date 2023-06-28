@@ -57,33 +57,37 @@ function [Fsc, Fst, Ksn, Dsn] = assembleSelfContactShapes(Shapes)
             T2 = -T1;
 
             % assemble contact normal forces
-            fContact(1:3,1,E11) = -omegaN * (1-W(1)) * (U) * N1;
-            fContact(1:3,1,E12) = -omegaN * (W(1)) * (U) * N1;
-            fContact(1:3,1,E21) = -omegaN * (1-W(2)) * (U) * N2;
-            fContact(1:3,1,E22) = -omegaN * (W(2)) * (U) * N2;
+            WR1 = R1/(R1+R2);
+            WR2 = R2/(R1+R2);
+
+            fContact(1:3,1,E11) = -omegaN * WR1 * (1-W(1)) * (U) * N1;
+            fContact(1:3,1,E12) = -omegaN * WR1 *  (W(1)) * (U) * N1;
+            fContact(1:3,1,E21) = -omegaN * WR2 * (1-W(2)) * (U) * N2;
+            fContact(1:3,1,E22) = -omegaN * WR2 * (W(2)) * (U) * N2;
 
             % assemble contact normal friction forces
-            fFriction(1:3,1,E11) = -omegaT * (1-W(1)) * dot(V1,N1) * N1;
-            fFriction(1:3,1,E12) = -omegaT * (W(1)) * dot(V1,N1) * N1;
-            fFriction(1:3,1,E21) = -omegaT * (1-W(2)) * dot(V2,N2) * N2;
-            fFriction(1:3,1,E22) = -omegaT * (W(2)) * dot(V2,N2) * N2;
+            fFriction(1:3,1,E11) = -omegaT * WR1 * (1-W(1)) * dot(V1,N1) * N1;
+            fFriction(1:3,1,E12) = -omegaT * WR1 * (W(1)) * dot(V1,N1) * N1;
+            fFriction(1:3,1,E21) = -omegaT * WR2 * (1-W(2)) * dot(V2,N2) * N2;
+            fFriction(1:3,1,E22) = -omegaT * WR2 * (W(2)) * dot(V2,N2) * N2;
 
             EE = [E11,E12,E21,E22];
             NN = [N1,N1,N2,N2];
             WW = [(1-W(1)),W(1),(1-W(2)),W(2)];
+            WR = [WR1,WR1,WR2,WR2];
 
             % assemble contact stiffness matrix
             for jj = 1:4
                 kk = JvT(:,:,EE(jj)) * NN(:,jj);
-                Ksn = Ksn + omegaN * kk * (kk).';
+                Ksn = Ksn + omegaN * WR(jj) * WW(jj) *kk * (kk).';
             end
         end
     end
 
     if isContact
-        Fsc = sum(pagemtimes(JvT, 1e-1*fContact),3);
+        Fsc = sum(pagemtimes(JvT, fContact),3);
         Fst = 0*sum(pagemtimes(JvT, fFriction),3);
     end
 
-    Dsn = Ksn * (omegaT/omegaN);
+    Dsn = Ksn * (omegaT);
 end

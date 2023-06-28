@@ -115,14 +115,22 @@ function Shapes = setRadius(Shapes,varargin)
       Shapes.geometry.TubeRamp = R(3);
       Shapes.geometry.TubeRadiusAlpha = R(4);
    end
-   
-   Shapes.geometry.Sdf = sCircle(Shapes.geometry.TubeRadiusA);
+
+   if Shapes.geometry.TubeRadiusAlpha > 0.5
+        Rmean = mean(Shapes.geometry.TubeRadiusA,Shapes.geometry.TubeRadiusB);
+        Shapes.geometry.Sdf = sCircle(Rmean);
+    else
+        W = Shapes.geometry.TubeRadiusA/2;
+        H = Shapes.geometry.TubeRadiusB/2;
+        Shapes.geometry.Sdf = sRectangle(-W,W,-H,H);
+    end
+
    Shapes = rebuild(Shapes);
 end
 %----------------------------------------------------------------- set ramp
 function Shapes = setRamp(Shapes,x)
     y = clamp(x,0,1);  
-    Shapes.TubeRamp = y;
+    Shapes.geometry.TubeRamp = y;
 end
 %-------------------------------------------------------------- set gravity 
 function Shapes = setInputMap(Shapes,varargin)
@@ -144,7 +152,6 @@ end
 %-------------------------------------------------------------- set gravity 
 function Shapes = addGravity(Shapes,varargin)
     if isempty(varargin)
-        %vec = -9810*Shapes.xia0(4:6);
         varargin{1} = [0; 0;-9810];
     end
     Shapes.system.Gravity = varargin{1};    
