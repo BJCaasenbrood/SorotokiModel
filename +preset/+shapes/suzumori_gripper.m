@@ -7,8 +7,8 @@ function [SHAPES, GRIPPER] = suzumori_gripper(varargin)
     parse(p,varargin{:});
 
     currentDir = fileparts(mfilename('fullpath'));
-    stlPath1 = fullfile(currentDir, '..', 'assets/stl/', 'suzumori_gripper_beam.stl');
-    stlPath2 = fullfile(currentDir, '..', 'assets/stl/', 'suzumori_gripper_base.stl');
+    stlPath1 = fullfile(currentDir, 'assets/', 'suzumori_gripper_beam.stl');
+    stlPath2 = fullfile(currentDir, 'assets/', 'suzumori_gripper_base.stl');
     
     % try
         obj  = Gmodel(stlPath1,'Texture', matcap_polishedaluminium,'Shading','Face');
@@ -42,7 +42,7 @@ function [SHAPES, GRIPPER] = suzumori_gripper(varargin)
 
             shp.Material.params.Zeta = 0.5;
             shp.Material.params.Rho  = 250e-12;
-            shp.Material.contact.ContactFriction = 0.85;
+            shp.Material.contact.ContactFriction = 0.35;
             shp.Material.contact.NormalReaction  = 0.05;
             shp.Material.contact.TangentReaction = 0.05;
 

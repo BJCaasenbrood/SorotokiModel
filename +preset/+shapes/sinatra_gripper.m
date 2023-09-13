@@ -4,8 +4,8 @@ function [SHAPES, GRIPPER] = sinatra_gripper(varargin)
     [Y,~] = chebyspace(80,3);
 
     currentDir = fileparts(mfilename('fullpath'));
-    stlPath1 = fullfile(currentDir, '..', 'assets/stl/', 'sinatra_gripper_base.stl');
-    stlPath2 = fullfile(currentDir, '..', 'assets/stl/', 'sinatra_gripper_holder.stl');
+    stlPath1 = fullfile(currentDir, 'assets/', 'sinatra_gripper_base.stl');
+    stlPath2 = fullfile(currentDir, 'assets/', 'sinatra_gripper_holder.stl');
 
     obj1 = Gmodel(stlPath1,'Shading','Face');
     obj1.Texture = matcap_grey * 1.25;
