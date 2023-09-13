@@ -26,6 +26,9 @@ function Shapes = assembleBoundaryShapes(Shapes)
     if isfield(Shapes.system,'Contact') 
         [Fnc, Ftc, Knc, Ktc]  = assembleContactShapes(Shapes);
         Shapes.system.Tangent = Shapes.system.Tangent + Knc + Ktc; 
+        Shapes.system.Damping = Shapes.system.Damping + (Knc + Ktc) * Shapes.solver.TimeStep;
+        Shapes.system.fDamping = Shapes.system.fDamping ...
+            + (Knc + Ktc) * Shapes.solver.TimeStep * Shapes.solver.sol.dx;
     end
 
     if Shapes.options.isSelfContact
