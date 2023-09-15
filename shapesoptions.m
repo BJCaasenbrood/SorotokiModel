@@ -45,7 +45,7 @@ classdef shapesoptions
             obj.ContactDistance     = [];
             obj.isRampCompensation  = true;
             obj.isOrthonormal       = true;
-            obj.isSelfContact       = false;
+            obj.isSelfContact       = true;
         end
     end
 end
