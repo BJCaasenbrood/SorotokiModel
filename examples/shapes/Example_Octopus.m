@@ -4,16 +4,16 @@
 % Initialize the test suite
 % Add test cases here
 clr;
-M = 10;
+M = 8;
 Xd = [30,0,60];
 
 mat = NeoHookean(0.1,0.49);
-shp = Shapes(chebyspace(50,M),[0,M,0,0,0,0],'Material',mat);
+shp = Shapes(chebyspace(150,M),[0,M,0,0,0,0],'Material',mat);
 shp = shp.setRadius([5,5,0.9]);
 shp.system.Drag = 6000e-12;
 shp.options.isRampCompensation = true;
 shp.options.isSelfContact = false;
-shp.solver.TimeStep = 1/60;
+shp.solver.TimeStep = 1/160;
 shp.solver.TimeHorizon = 5;
 
 sdf = sSphere(10,[60,0,30]);
@@ -42,9 +42,9 @@ function tau = Control(shp,Xd)
     [~,d] = distance2curve(Xd,P);
     [~,I] = min(d);
 
-    kp  = 12500;
+    kp  = 125e7;
     e   = 0;
-    rho = 1e3;
+    rho = 1e6;
 
     for ii = I
         b = Xd(:) - P(ii-3,:).';

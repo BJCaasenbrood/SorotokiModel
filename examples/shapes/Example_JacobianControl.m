@@ -9,16 +9,16 @@ clr;
 M = 6;
 Xd = [50,0,20];
 
-shp = Shapes(chebyspace(30,M),[0,M,M,0,0,0],'Material',NeoHookean(0.01,0.3));
+shp = Shapes(chebyspace(20,M),[0,M,M,0,0,0],'Material',NeoHookean(0.01,0.3));
 shp = shp.addGravity([0;0;-500]);
-shp = shp.setBase(roty(pi/2));
-shp = shp.setRadius([5,5,0.7]);
+shp = shp.setBase('+x');
+shp = shp.setRadius([5,5,0.75]);
 
 shp = shp.rebuild();
 shp.solver.TimeStep = 1/60;
 shp.solver.TimeHorizon = 15;
 
-sdf = sSphere(12.5,[20,0,15]);
+sdf = sSphere(12.5,[50,0,-25]);
 obj = sSphere(2,Xd);
 shp = shp.addContact(sdf);
 con = Gmodel(sdf,'Texture',matcap_diffuse(0.2));
@@ -27,7 +27,7 @@ obj = Gmodel(obj,'Texture',matcap_diffuse(0.82));
 obj.render();
 
 shp.system.Controller = @(x) Control(x,Xd);
-shp = solveDynamicShapes(shp);
+shp.simulate;
 
 T = shp.solver.sol.tout;
 Y = shp.solver.sol.yout;

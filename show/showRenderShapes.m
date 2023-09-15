@@ -20,6 +20,7 @@ function Shapes = showRenderShapes(Shapes,varargin)
         TubeRamp    = Shapes.geometry.TubeRamp;
 
         Node = backbone(pagemtimes(inv(SE3(R0,p0)), g));
+        % Node = interp1(linspace(0,1,Shapes.NNode),Node,linspace(0,1,Shapes.NNode));
         
         [x,y,z] = rtubeplot(Node.',...
             TubeRadiusA,...

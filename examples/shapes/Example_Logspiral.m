@@ -41,38 +41,3 @@ end
 function q0 = initialCond
     q0 = [-0.1766; -0.1182; -0.0159; -0.0011; 0.0004];
 end
-
-% for ii = 1:numel(q)
-%     shp = showRenderShapes(shp);
-%     view(30,30);
-%     pause(.1);
-% end
-
-
-
-% sdf = sSphere(20,[50,-20,15]);
-% obj = sSphere(2,Xd);
-% shp = shp.addContact(sdf);
-% con = Gmodel(sdf,'Texture',matcap_diffuse(0.2));
-% con.render();
-% obj = Gmodel(obj,'Texture',matcap_diffuse(0.82));
-% obj.render();
-
-% shp.system.Controller = @(x) Control(x,Xd);
-% shp = solveDynamicShapes(shp);
-
-% T = shp.solver.sol.tout;
-% Y = shp.solver.sol.yout;
-
-% %%
-% function tau = Control(shp,Xd)
-%     t = shp.solver.Time;
-%     J = shp.system.Jacobian(4:6,:,end);
-%     fe = shp.system.fElastic;
-%     fg = shp.system.fBody;
-%     x  = shp.system.Backbone(1:3,4,end);
-
-%     kp = 1e-4;
-    
-%     tau = fe + fg + kp * J.'*(Xd(:) - x);
-% end
