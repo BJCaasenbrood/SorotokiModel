@@ -41,7 +41,7 @@ function Shapes = show(Shapes,varargin)
     g = string(Shapes, q);
     G0 = pagemtimes(inv(SE3(R0,p0)), g);
 
-    G = curveSweepModifierFast_mex(Shapes.Gmodel.Node0, Shapes.geometry.IKList, G0);
+    G = curveSweepModifierFast(Shapes.Gmodel.Node0, Shapes.geometry.IKList, G0);
     Shapes.Gmodel.Node = backbone(pagemtimes(SE3(R0,p0), G));
     Shapes.Gmodel.update();
 end
