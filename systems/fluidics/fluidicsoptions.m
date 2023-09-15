@@ -2,7 +2,6 @@ classdef fluidicsoptions
     
     properties
         Type;
-
         isRegulated;
     end
     
