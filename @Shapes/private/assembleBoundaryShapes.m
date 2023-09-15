@@ -26,14 +26,14 @@ function Shapes = assembleBoundaryShapes(Shapes)
     if isfield(Shapes.system,'Contact') 
         [Fnc, Ftc, Knc, Ktc]  = assembleContactShapes(Shapes);
         Shapes.system.Tangent = Shapes.system.Tangent + Knc + Ktc; 
-        Shapes.system.Damping = Shapes.system.Damping + (Knc + Ktc) * Shapes.solver.TimeStep;
+        Shapes.system.Damping = Shapes.system.Damping + (Knc + Ktc) * Shapes.solver.TimeStep * 0;
         Shapes.system.fDamping = Shapes.system.fDamping ...
-            + (Knc + Ktc) * Shapes.solver.TimeStep * Shapes.solver.sol.dx;
+             + (Knc + Ktc) * (Shapes.solver.TimeStep) * Shapes.solver.sol.dx * 0;
     end
 
     if Shapes.options.isSelfContact
         [Fsc, Fst, Ksn, Dsn] = assembleSelfContactShapes(Shapes);
-        %Shapes.system.Tangent = Shapes.system.Tangent + Ksn;  
+        Shapes.system.Tangent = Shapes.system.Tangent + Ksn;  
         Shapes.system.Damping = Shapes.system.Damping + Dsn;     
         Shapes.system.fDamping = Shapes.system.fDamping ...
             + Dsn * Shapes.solver.sol.dx;

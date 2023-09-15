@@ -53,13 +53,13 @@ if ~isempty(Intersect)
   gt = vecnorm(Vt.').' * Shapes.solver.TimeStep;
 
   % stick-slip boolean vector
-  cType = abs(omegaT * squeeze(gt)) >= abs(mu * omegaN * gn);
+  cType = ~(abs(omegaT * squeeze(gt)) >= abs(mu * omegaN * gn));
   JvT = pagetranspose(J(4:6,:,I));
 
   GN = zeros(1,1,numel(I)); CT = GN; GT = GN;
   GN(1,1,:) = gn;
   GT(1,1,:) = gt;
-  CT(1,1,:) = ~cType;
+  CT(1,1,:) = cType;
 
   Fcont = zeros(3,1,numel(I));
   Fcont(1,:,:) = -omegaN * Ux;
