@@ -10,6 +10,7 @@ function [Fsc, Fst, Ksn, Dsn] = assembleSelfContactShapes(Shapes)
     Fsc = sparse(Shapes.NJoint,1);
     Fst = sparse(Shapes.NJoint,1);
     Ksn = sparse(Shapes.NJoint,Shapes.NJoint);
+    %Dsn = sparse(Shapes.NJoint,Shapes.NJoint);
     ramp = min(max(Shapes.geometry.TubeRamp,1e-6),1-1e-6);
 
     if numel(ramp) == 1

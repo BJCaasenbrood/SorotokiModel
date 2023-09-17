@@ -59,7 +59,11 @@ function Shapes = simulate(Shapes, varargin)
             Shapes.solver.sol.ddx = ddx1;
             Shapes.solver.Time    = tf + dt - alphaF*dt;
     
-            Shapes = Shapes.compute();
+            % if Shapes.solver.Iteration < 50
+                Shapes = Shapes.compute();
+            % else
+            %     Shapes = Shapes.compute('nobuild',true);
+            % end
     
             A = (1-alphaF) * beta * dt*dt * Shapes.system.Tangent + ...
                 (1-alphaF) * gamma * dt * Shapes.system.Damping - ...
