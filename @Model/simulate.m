@@ -1,11 +1,13 @@
 function Model = simulate(Model, varargin)
 
+% warning off;
+
 In     = eye(Model.NDim);
 NSteps = round(Model.solver.TimeHorizon/Model.solver.TimeStep);
 
-% if Model.solver.isLog
-%     progBar = ProgressBar(NSteps + 1,'Title', 'Solving...');
-% end
+if Model.solver.isLog
+    progBar = ProgressBar(NSteps + 1,'Title', 'Solving...');
+end
 
 Model.solver.Time = 0;
 
@@ -37,9 +39,9 @@ while Model.solver.Time < Model.solver.TimeHorizon
     elseif FLAG == 3 
 
         % guess for y_{n+0.5}
-        k1 = Model.system.Systems{1}.flow(x0, 0, tf);
-        k2 = Model.system.Systems{1}.flow(x0 + dt * k1, 0, tf + dt);
-        x0 = 0.5 * (x0 + (x0 + (dt/2) * (k1 + k2)));
+        % k1 = Model.system.Systems{1}.flow(x0, 0, tf);
+        % k2 = Model.system.Systems{1}.flow(x0 + dt * k1, 0, tf + dt);
+        % x0 = 0.5 * (x0 + (x0 + (dt/2) * (k1 + k2)));
 
         while norm(Model.solver.Residual) > Model.solver.RelTolerance && ...
             Model.solver.Iteration < Model.solver.MaxIteration
@@ -59,11 +61,11 @@ while Model.solver.Time < Model.solver.TimeHorizon
             if Model.solver.Iteration > 1
                 minL = sqrt(1+th) * lam0;
                 maxL = norm(xf_ - x0)/norm(dfdq1 - dfdq0);
-                lam1 = clamp(min([minL, maxL]), 0, Inf);
+                lam1 = clamp(min([minL, maxL]), 0, 1e3);
             else
                 lam0 = 1;
                 lam1 = lam0;
-                th   = +Inf;
+                th   = +1e3;
             end
 
             Model.solver.Residual  = b;
@@ -73,6 +75,8 @@ while Model.solver.Time < Model.solver.TimeHorizon
             xf_ = x0;
             x0  = x0 - lam1 * dfdq1;
             dfdq0 = dfdq1;
+
+            % disp( norm(b) )
         end
     end
 
@@ -80,10 +84,9 @@ while Model.solver.Time < Model.solver.TimeHorizon
         x0 = 2 * x0 - xf;
     end
 
-    % Model.solver.Iteration
-    % if Model.solver.isLog
-    %     progBar([], [], []);
-    % end
+    if Model.solver.isLog
+        progBar([], [], []);
+    end
 
     step = Model.solver.SubIteration;
     Model.solver.sol.yout(step,:) = Model.solver.sol.x;
@@ -96,9 +99,9 @@ while Model.solver.Time < Model.solver.TimeHorizon
     Model.solver.sol.x = x0;
 end
 
-% if Model.solver.isLog
-%     progBar.release();
-%     fprintf('\n');
-% end
+if Model.solver.isLog
+    progBar.release();
+    fprintf('\n');
+end
 
 end
