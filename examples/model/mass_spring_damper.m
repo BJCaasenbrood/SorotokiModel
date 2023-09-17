@@ -1,4 +1,3 @@
-
 clr;
 %%
 
@@ -12,6 +11,7 @@ B = [0;0];
 sys = StateSpace({A,B},[1;-1]);
 mdl = Model(sys);
 
+mdl.solver.TimeHorizon = 1;
 mdl.solver.isLog = 0;
 
 tic;
