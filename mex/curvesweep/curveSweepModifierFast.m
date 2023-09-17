@@ -5,11 +5,11 @@ function H = curveSweepModifierFast(Node0, List, Curve)
     for ii = 1:length(Node0)
         v = Node0(ii,:);
 
-        a = List(ii);
         vy = v(2);
         vz = v(3);
-
+   
         p1 = [0; vy; vz];
+        a = List(ii);
         
         if floor(a) == 0
             low = SE3(eye(3), [0;0;0]);
