@@ -29,7 +29,11 @@ function obj = Model(Input,varargin)
         obj.system.NState{1} = Input.getDimension;
         obj.system.NInput{1} = Input.getNumberInputs;
 
-        obj.solver.sol.x = Input.solver.sol.x;
+        if isa(Input,'Shapes')
+            obj.solver.sol.x = [Input.solver.sol.x; Input.solver.sol.dx];
+        else
+            obj.solver.sol.x = Input.solver.sol.x;
+        end
     else
 
     end
