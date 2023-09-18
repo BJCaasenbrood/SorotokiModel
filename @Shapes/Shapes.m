@@ -67,23 +67,6 @@ function obj = Shapes(Basis,ModalDof,varargin)
     obj = rebuild(obj);
 end  
 %--------------------------------------------------------- compute jacobian
-function [g, J] = string(Shapes,q)
-    
-assert(numel(q) == Shapes.NJoint,['Dimension of joint inconstistent ',...
-        'with POD matrix. Please check your input dimensions dim(q).']);
-
-% ensures robustness for near-zero singularities in some PCC models
-q = q(:) + 1e-12;
-
-[g, J] = computeForwardKinematicsFast_mex(q,q*0,... % states
-    Shapes.beamsolver.SpaceStep,...         % spatial steps
-    Shapes.beamsolver.g0(1:3,4),...         % position zero
-    Shapes.beamsolver.g0(1:3,1:3),...       % phi zeroclc
-    Shapes.beamsolver.Xi0Eval,...    % intrinsic strain vector
-    Shapes.beamsolver.ThetaEval,...  % evaluated Theta matrix
-    Shapes.beamsolver.DofMap);
-end
-%--------------------------------------------------------- compute jacobian
 function Shapes = compute(Shapes,varargin)
 
 noBuild = false;
