@@ -1,6 +1,6 @@
 function Shapes = assembleGaussQuadrature(Shapes)
 n = Shapes.beamsolver.GaussPrecisionLocal;
-m = Shapes.beamsolver.GaussPrecisionGlobal;
+% m = Shapes.beamsolver.GaussPrecisionGlobal;
 
 % get local gauss interp points for [-1,1]
 [wl, pl] = gaussQuadrature(n);
@@ -25,13 +25,13 @@ end
 Shapes.beamsolver.evalLocal.weights = squeeze(Wl);
 Shapes.beamsolver.evalLocal.points  = squeeze(Sl);
 
-% get global gauss interp points for [-1,1]
-[wg, pg] = gaussQuadrature(m);
+% % get global gauss interp points for [-1,1]
+% [wg, pg] = gaussQuadrature(m);
 
-Sg = 0.5*Shapes.Length*pg + 0.5*Shapes.Length;
-Wg = 0.5*Shapes.Length*wg;
+% Sg = 0.5*Shapes.Length*pg + 0.5*Shapes.Length;
+% Wg = 0.5*Shapes.Length*wg;
 
-Shapes.beamsolver.evalGlobal.weights = Wg;
-Shapes.beamsolver.evalGlobal.points  = Sg;
+% Shapes.beamsolver.evalGlobal.weights = Wg;
+% Shapes.beamsolver.evalGlobal.points  = Sg;
 
 end
