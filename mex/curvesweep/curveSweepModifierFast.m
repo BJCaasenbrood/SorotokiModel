@@ -7,6 +7,7 @@ function H = curveSweepModifierFast(Node0, List, Curve)
 
         vy = v(2);
         vz = v(3);
+        % dvx = 
    
         p1 = [0; vy; vz];
         a = List(ii);
@@ -35,73 +36,78 @@ function H = curveSweepModifierFast(Node0, List, Curve)
     end
 end
 
-function T_interp = lerpSE3(T1, T2, t)
-    % Extract rotation matrices and translation vectors from SE3 transformations
-    R1 = T1(1:3, 1:3);
-    p1 = T1(1:3, 4);
-    
-    R2 = T2(1:3, 1:3);
-    p2 = T2(1:3, 4);
+function Z = lerpSE3(X,Y,t)
 
-    % [U1, S1, V1] = svd(R1);
-    % [U2, S2, V2] = svd(R2);
+    dH = Y / X;
+    R = dH(1:3,1:3);
+    T = dH(1:3,4);
 
-    % % Combine the rotation matrices using the linear combination
-    % R_interp = t * U1 * V1' + (1 - t) * U2 * V2';
-    R_interp = (t * R1 + (1 - t) * R2);
-    % q1 = rot2quat(R1);
-    % q2 = rot2quat(R2);
-    
-    % q_interp = lerp(q1,q2,t);
-    % R_interp = quat2rot(q_interp);
-    p_interp = (1 - t) * p1 + t * p2;
-    T_interp = [R_interp, p_interp; 0, 0, 0, 1];
-end
-
-function R = quat2rot(q)
-    w = q(1); x = q(2); y = q(3); z = q(4);
-    Rxx = 1 - 2*(y^2 + z^2); Rxy = 2*(x*y - z*w); Rxz = 2*(x*z + y*w); 
-    Ryx = 2*(x*y + z*w); Ryy = 1 - 2*(x^2 + z^2); Ryz = 2*(y*z - x*w );
-    Rzx = 2*(x*z - y*w ); Rzy = 2*(y*z + x*w ); Rzz = 1 - 2 *(x^2 + y^2);
-    
-    R = [Rxx, Rxy, Rxz; Ryx, Ryy, Ryz; Rzx, Rzy, Rzz];
-end
-    
-function q = rot2quat(R)
-
-    R = squeeze(R);
-    T = 1.0 + R(1,1) + R(2,2) + R(3,3);
-    
-    if T > eps
-        
-        S  = 0.5 / sqrt(T);
-        qw = 0.25 / S;
-        qx = (R(3,2) - R(2,3)) * S;
-        qy = (R(1,3) - R(3,1)) * S;
-        qz = (R(2,1) - R(1,2)) * S;
-    elseif R(1,1) > R(2,2) && R(1,1) > R(3,3)
-        S = sqrt( 1.0 + R(1,1) - R(2,2) - R(3,3) ) * 2;
-        qx = 0.25 * S;
-        qy = (R(1,2) + R(2,1)) / S;
-        qz = (R(1,3) + R(3,1)) / S;
-        qw = (R(2,3) - R(3,2)) / S;
-    elseif R(2,2) > R(3,3)
-        S = sqrt( 1.0 + R(2,2) - R(1,1) - R(3,3) ) * 2;
-        qx = (R(1,2) + R(2,1) ) / S;
-        qy = 0.25 * S;
-        qz = (R(2,3) + R(3,2) ) / S;
-        qw = (R(1,3) - R(3,1) ) / S;
+    % get log of rotation matrix
+    S = logmapSO3(R);
+    th = norm([S(3,2); S(1,3); S(2,1)]);
+    if abs(th) < 1e-9
+        Vi = eye(3);
     else
-        S = sqrt( 1.0 + R(3,3) - R(1,1) - R(2,2) ) * 2;
-        qx = (R(1,3) + R(3,1)) / S;
-        qy = (R(2,3) + R(3,2)) / S;
-        qz = 0.25 * S;
-        qw = (R(1,2) - R(2,1)) / S;
+        Vi = eye(3) - 0.5 * S + (1/(th^2)) * (1 - (th*sin(th))/(2*(1-cos(th))))*(S*S);
+    end
+    U  = Vi * T;
+
+    Rt = expmapSO3(t * S);
+    tth = t*th;
+    
+    if abs(tth) < 1e-9
+        Vt = eye(3);
+    else
+        Vt = eye(3) + ((1-cos(tth))/(tth)^2)*(t*S) + ((tth - sin(tth))/((tth)^3)) * (t*S) * (t*S);
     end
     
-    q = zeros(4,1);
-    q(1) = qw;
-    q(2) = qx;
-    q(3) = qy;
-    q(4) = qz;
+    Tt = t * Vt * U;
+
+    Z = ([Rt,Tt;0,0,0,1]) * X;
 end
+
+function Y = logmapSO3(X)
+    S = X;
+    theta = acos(0.5*((S(1,1) + S(2,2) + S(3,3)) - 1));
+    alpha = 0.5*theta/ ( sin(theta) + 1e-12);
+    Y = alpha*(S - S.'); 
+end
+
+function Y = expmapSO3(X)
+    S = X;
+    X = [S(3,2); S(1,3); S(2,1)];
+
+    t = norm(X);
+    if abs(t) >= 1e-12
+        a = sin(t)/t;
+        b = (1-cos(t))/(t*t);
+        
+        Y = eye(3) + a*S + b*S*S;
+    else
+        Y = eye(3);
+    end
+end
+
+
+% function T_interp = lerpSE3(T1, T2, t)
+%     % Extract rotation matrices and translation vectors from SE3 transformations
+%     R1 = T1(1:3, 1:3);
+%     p1 = T1(1:3, 4);
+% 
+%     R2 = T2(1:3, 1:3);
+%     p2 = T2(1:3, 4);
+% 
+%     % [U1, S1, V1] = svd(R1);
+%     % [U2, S2, V2] = svd(R2);
+% 
+%     % % Combine the rotation matrices using the linear combination
+%     % R_interp = t * U1 * V1' + (1 - t) * U2 * V2';
+%     R_interp = (t * R1 + (1 - t) * R2);
+%     % q1 = rot2quat(R1);
+%     % q2 = rot2quat(R2);
+% 
+%     % q_interp = lerp(q1,q2,t);
+%     % R_interp = quat2rot(q_interp);
+%     p_interp = (1 - t) * p1 + t * p2;
+%     T_interp = [R_interp, p_interp; 0, 0, 0, 1];
+% end
