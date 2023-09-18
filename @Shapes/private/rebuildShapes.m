@@ -36,6 +36,7 @@ Shapes.beamsolver.Mtt = Shapes.Material.params.Rho * ...
 % linear approximation of the stiffness
 [~,Ktt] = Shapes.Material.PiollaStress(eye(3));
 Ktt = 4.15*diag(voightextraction(Ktt));
+% Ktt = diag(voightextraction(Ktt));
 % E  = Shapes.Material.getModulus();
 % Nu = Shapes.Material.Nu;
 % G  = E/(2*(Nu+1));
@@ -95,6 +96,9 @@ if ~isa(Shapes.beamsolver.Xi0,'function_handle')
 end
 
 if ~isempty(Shapes.system.pod.Theta) 
+
+Shapes = assembleGaussQuadrature(Shapes);    
+Shapes = assembleGaussEvals(Shapes);       
     
 % precompute Theta matrix
 FncT = @(x) Shapes.system.pod.Theta(x);
@@ -167,8 +171,8 @@ end
 %--------------------------------------------- isomorphism from R3 to so(3)
 function y = voightextraction(X)
     y(1,1) = X(2,3);
-    y(2,1) = 2*X(4,4);
-    y(3,1) = 2*X(4,4);
+    y(2,1) = 2*X(6,6);
+    y(3,1) = 2*X(6,6);
     y(4,1) = X(1,1);
     y(5,1) = X(2,1);
     y(6,1) = X(3,1);
