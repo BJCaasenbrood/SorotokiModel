@@ -23,6 +23,7 @@ classdef shapesoptions
         isVolumetricContact;
         ContactDistance;
         isRampCompensation;
+        Quality;
     end
     
     methods
@@ -46,6 +47,7 @@ classdef shapesoptions
             obj.isRampCompensation  = true;
             obj.isOrthonormal       = true;
             obj.isSelfContact       = false;
+            obj.Quality             = 60;
         end
     end
 end
