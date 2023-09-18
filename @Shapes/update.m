@@ -86,6 +86,10 @@ while norm(Shapes.solver.Residual) > Shapes.solver.RelTolerance && ...
 
     % linear solve
     dfdq1 = A \ b;
+    % L = chol(A);
+    % dfdq1 = L.' \ (L.' \ b);
+    % [L,D,P] = ldl(A,'vector');
+    % dfdq1 = (L'\(D\(L\b(P))));
 
     % adaptive gradient descent
     if Shapes.solver.Iteration > 1
