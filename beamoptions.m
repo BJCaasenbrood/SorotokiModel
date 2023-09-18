@@ -62,7 +62,7 @@ classdef beamoptions
             obj.g0            = eye(4);
             obj.Xi0           = [0,0,0,1,0,0].';
 
-            obj.GaussPrecisionLocal  = 2;
+            obj.GaussPrecisionLocal  = 10;
         end
     end
 end
