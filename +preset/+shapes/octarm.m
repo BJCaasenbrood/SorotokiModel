@@ -1,8 +1,8 @@
 function shp = octarm(varargin)
 
     p = inputParser;
-    addOptional(p,'n',60);
-    addOptional(p,'m',5);
+    addOptional(p,'n',30);
+    addOptional(p,'m',10);
     parse(p,varargin{:});
 
     % try

@@ -8,7 +8,7 @@ addOptional(p,'contact',1);
 parse(p,varargin{:});
 
 currentDir = fileparts(mfilename('fullpath'));
-stlPath = fullfile(currentDir, '..', 'assets/stl/', 'softhand_mount.stl');
+stlPath = fullfile(currentDir, 'assets/', 'softhand_mount.stl');
 
 %try
     obj = Gmodel(stlPath,'Shading','Face','Texture',matcap_egg);

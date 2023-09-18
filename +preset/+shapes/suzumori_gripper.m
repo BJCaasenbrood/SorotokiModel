@@ -1,7 +1,7 @@
 function [SHAPES, GRIPPER] = suzumori_gripper(varargin)
 
     p = inputParser;
-    addOptional(p,'n',30);
+    addOptional(p,'n',10);
     addOptional(p,'dt',1/120);
     addOptional(p,'contact',1);
     parse(p,varargin{:});
