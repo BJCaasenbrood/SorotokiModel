@@ -101,34 +101,34 @@ Shapes = assembleGaussQuadrature(Shapes);
 Shapes = assembleGaussEvals(Shapes);       
     
 % precompute Theta matrix
-FncT = @(x) Shapes.system.pod.Theta(x);
-FncX = @(x) Shapes.beamsolver.Xi0(x);
-s   = sort([Shapes.beamsolver.Space*Shapes.Length,...
-            Shapes.beamsolver.Space*Shapes.Length + ...
-            (2/3)*Shapes.beamsolver.SpaceStep]);
+% FncT = @(x) Shapes.system.pod.Theta(x);
+% FncX = @(x) Shapes.beamsolver.Xi0(x);
+% s   = sort([Shapes.beamsolver.Space*Shapes.Length,...
+%             Shapes.beamsolver.Space*Shapes.Length + ...
+%             (2/3)*Shapes.beamsolver.SpaceStep]);
 
-[nx,ny] = size(FncT(0));
-Shapes.beamsolver.ThetaEval = zeros(nx,ny,numel(s));
-Shapes.beamsolver.Xi0Eval   = zeros(6,1,numel(s));
-Shapes.beamsolver.KttEval   = zeros(6,6,numel(s));
-Shapes.beamsolver.MttEval   = zeros(6,6,numel(s));
-Shapes.beamsolver.DttEval   = zeros(6,6,numel(s));
+% [nx,ny] = size(FncT(0));
+% Shapes.beamsolver.ThetaEval = zeros(nx,ny,numel(s));
+% Shapes.beamsolver.Xi0Eval   = zeros(6,1,numel(s));
+% Shapes.beamsolver.KttEval   = zeros(6,6,numel(s));
+% Shapes.beamsolver.MttEval   = zeros(6,6,numel(s));
+% Shapes.beamsolver.DttEval   = zeros(6,6,numel(s));
 
-for ii = 1:numel(s)
-    Shapes.beamsolver.ThetaEval(:,:,ii) = FncT(s(ii));
-    Shapes.beamsolver.Xi0Eval(:,1,ii)   = FncX(s(ii));
-    if Shapes.options.isRampCompensation
-        TubeRamp = 0.8;
-        alpha = lerp(1,1-TubeRamp,ii/numel(s));
-        Shapes.beamsolver.KttEval(:,:,ii)   = (alpha)^2 * Shapes.beamsolver.Ktt;
-        Shapes.beamsolver.MttEval(:,:,ii)   = (alpha)^2 * Shapes.beamsolver.Mtt;
-        Shapes.beamsolver.DttEval(:,:,ii)   = (alpha)^2 * Shapes.beamsolver.Dtt;
-    else
-        Shapes.beamsolver.KttEval(:,:,ii)   = Shapes.beamsolver.Ktt;
-        Shapes.beamsolver.MttEval(:,:,ii)   = Shapes.beamsolver.Mtt;
-        Shapes.beamsolver.DttEval(:,:,ii)   = Shapes.beamsolver.Dtt;
-    end
-end
+% for ii = 1:numel(s)
+%     Shapes.beamsolver.ThetaEval(:,:,ii) = FncT(s(ii));
+%     Shapes.beamsolver.Xi0Eval(:,1,ii)   = FncX(s(ii));
+%     if Shapes.options.isRampCompensation
+%         TubeRamp = 0.8;
+%         alpha = lerp(1,1-TubeRamp,ii/numel(s));
+%         Shapes.beamsolver.KttEval(:,:,ii)   = (alpha)^2 * Shapes.beamsolver.Ktt;
+%         Shapes.beamsolver.MttEval(:,:,ii)   = (alpha)^2 * Shapes.beamsolver.Mtt;
+%         Shapes.beamsolver.DttEval(:,:,ii)   = (alpha)^2 * Shapes.beamsolver.Dtt;
+%     else
+%         Shapes.beamsolver.KttEval(:,:,ii)   = Shapes.beamsolver.Ktt;
+%         Shapes.beamsolver.MttEval(:,:,ii)   = Shapes.beamsolver.Mtt;
+%         Shapes.beamsolver.DttEval(:,:,ii)   = Shapes.beamsolver.Dtt;
+%     end
+% end
 end
 
 if isfield(Shapes.system,'Actuator')
@@ -158,8 +158,8 @@ if isfield(Shapes.system,'Actuator')
     
     Shapes.NInput = M;
 else
-   N = 2 * numel(Shapes.beamsolver.Space);
-   Shapes.beamsolver.ActuatorEval = zeros(N,6,1);
+%    N = 2 * numel(Shapes.beamsolver.Space);
+%    Shapes.beamsolver.ActuatorEval = zeros(N,6,1);
 end
 
 Shapes = assembleContactMeshShapes(Shapes);
