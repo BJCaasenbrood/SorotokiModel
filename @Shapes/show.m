@@ -19,6 +19,8 @@ function Shapes = show(Shapes,varargin)
         TubeRamp    = Shapes.geometry.TubeRamp;
 
         Node = backbone(pagemtimes(inv(SE3(R0,p0)), g));
+        Node = interp1(linspace(0,1,Shapes.NNode), Node, ...
+            linspace(0,1,Shapes.options.Quality));
         
         [x,y,z] = rtubeplot(Node.',...
             TubeRadiusA,...
@@ -38,10 +40,9 @@ function Shapes = show(Shapes,varargin)
         Shapes.geometry.IKList = clamp(t * Shapes.NNode, 0, Shapes.NNode);
     end
 
-    g = string(Shapes, q);
+    g  = string(Shapes, q);
     G0 = pagemtimes(inv(SE3(R0,p0)), g);
-
-    G = curveSweepModifierFast_mex(Shapes.Gmodel.Node0, Shapes.geometry.IKList, G0);
+    G  = curveSweepModifierFast_mex(Shapes.Gmodel.Node0, Shapes.geometry.IKList, G0);
     Shapes.Gmodel.Node = backbone(pagemtimes(SE3(R0,p0), G));
     Shapes.Gmodel.update();
 end
