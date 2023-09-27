@@ -23,7 +23,7 @@ function shp = dellasantina_arm(varargin)
         shp.Material.contact.NormalReaction  = 0.1;
         shp.Material.contact.TangentReaction = 0;
 
-        shp = shp.setRadius([15, 22, 0.75]);
+        shp = shp.setRadius([22, 15, 0.75]);
         shp = shp.setBase(SE3(rotz(pi/2),[0;0;0]));
 
         t   = linspace(0,1,100);

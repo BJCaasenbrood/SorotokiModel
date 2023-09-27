@@ -1,9 +1,10 @@
 function [SHAPES, GRIPPER] = suzumori_gripper(varargin)
 
     p = inputParser;
-    addOptional(p,'n',10);
+    addOptional(p,'n',12);
     addOptional(p,'dt',1/120);
     addOptional(p,'contact',1);
+    addOptional(p,'sdf', sSphere(35,[0,0,-60]));
     parse(p,varargin{:});
 
     currentDir = fileparts(mfilename('fullpath'));
@@ -30,30 +31,32 @@ function [SHAPES, GRIPPER] = suzumori_gripper(varargin)
             shp = shp.setRadius([9,9,0.0]);
 
             if p.Results.contact
-                sdf = sSphere(35,[0,0,-60]);
+                % sdf = sSphere(35,[0,0,-60]);
+                sdf = p.Results.sdf;
                 shp = shp.addContact(sdf);
 
                 obj = Gmodel(sdf);
                 obj.render;
-                % GRIPPER = vertcat(GRIPPER(:),obj);
             end
 
             shp.Material = NeoHookean(0.1,0.3);
 
-            shp.Material.params.Zeta = 0.5;
-            shp.Material.params.Rho  = 250e-12;
-            shp.Material.contact.ContactFriction = 0.35;
-            shp.Material.contact.NormalReaction  = 0.05;
-            shp.Material.contact.TangentReaction = 0.05;
+            shp.Material.params.Zeta = 0.35;
+            shp.Material.params.Rho  = 850e-12;
+            shp.Material.contact.ContactFriction = 0;
+            shp.Material.contact.NormalReaction  = 0.1;
+            shp.Material.contact.TangentReaction = 0;
 
             shp = shp.rebuild();
 
             shp.solver.TimeStep = p.Results.dt;
             shp.solver.TimeHorizon = Inf;
-            shp.solver.MaxIteration = 5;
+            shp.solver.MaxIteration = 2;
             shp.solver.sol.x(1) = -4e-2;
 
-            SHAPES{ii} = showRenderShapes(shp);
+            SHAPES{ii} = shp.show();
         end
+
+        axis([-70,70,-70,70,-70,90]);
     % end
 end

@@ -2,7 +2,7 @@ function [SHAPES, GRIPPER] = softhand(varargin)
 
 clr;
 p = inputParser;
-addOptional(p,'n',15);
+addOptional(p,'n',25);
 addOptional(p,'dt',1/60);
 addOptional(p,'contact',1);
 parse(p,varargin{:});
@@ -10,7 +10,7 @@ parse(p,varargin{:});
 currentDir = fileparts(mfilename('fullpath'));
 stlPath = fullfile(currentDir, 'assets/', 'softhand_mount.stl');
 
-%try
+% try
     obj = Gmodel(stlPath,'Shading','Face','Texture',matcap_egg);
     figure(101);
     view(105,20);
@@ -26,7 +26,8 @@ stlPath = fullfile(currentDir, 'assets/', 'softhand_mount.stl');
     SHAPES = cell(4,1);
 
     for ii = 1:5
-        shp = Shapes(Y,[0,2,0,0,0,0],'Length',L(ii),'Texture',matcap_diffuse(0.475));
+        shp = Shapes(Y,[0,2,0,0,0,0],'Length',L(ii),...
+          'Texture',matcap_diffuse(0.475));
         
         shp = shp.setInputMap( @(x) [1; 0] );
         shp.Material = NeoHookean(1.5, 0.3);
@@ -42,14 +43,15 @@ stlPath = fullfile(currentDir, 'assets/', 'softhand_mount.stl');
          shp = shp.addControl( @(x) Control(x, phi(ii)) );
 
         shp.solver.TimeStep = 1/30;
+        shp.solver.MaxIteration = 2;
         shp.solver.TimeHorizon = Inf;
 
         SHAPES{ii} = showRenderShapes(shp);
     end
-%end
-    axis tight;
+    axis([-20 20 -10 130 -100 100]);
 end
 
+% cell function containing SE(3) bases for soft fingers
 function G = initialBase
 G = cell(5);
 for ii = 1:4
@@ -58,9 +60,10 @@ end
     G{5} = SE3(rotx(-pi/4)*rotz(0),[6,83,-38]) * SE3(roty(-pi/2));
 end
 
+% controller function for periodic swinging
 function u  = Control(shp, phi)
     t = shp.solver.Time;
-    omega = 6;
+    omega = pi;
     Pset  = 350;
     u = sign(sin(omega*t - phi(1)));   
     u = smoothstep(t)*clamp(u*Pset,-5,Pset);
