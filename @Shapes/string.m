@@ -5,7 +5,6 @@ function [g, J] = string(Shapes,q,varargin)
     
     % ensures robustness for near-zero singularities in some PCC models
     q = q(:) + 1e-12;
-    
     % if isempty(varargin)
     % [g, J] = computeForwardKinematicsFast_mex(q,q*0,... % states
     %     Shapes.beamsolver.SpaceStep,...         % spatial steps
@@ -15,6 +14,7 @@ function [g, J] = string(Shapes,q,varargin)
     %     Shapes.beamsolver.ThetaEval,...  % evaluated Theta matrix
     %     Shapes.beamsolver.DofMap);
     % else
+
     [g, J] = computeForwardKinematicsGaussFast_mex(q,q*0,... % states
         Shapes.beamsolver.g0(1:3,4),...         % position zero
         Shapes.beamsolver.g0(1:3,1:3),...       % phi zeroclc
@@ -24,4 +24,9 @@ function [g, J] = string(Shapes,q,varargin)
         Shapes.beamsolver.evalLocal.weights,...
         Shapes.beamsolver.evalLocal.points);  % gauss weights    
     % end
+
+    if nargout > 1
+        % transform jacobian from local into global (static) frame
+        [J] = computeFrameChangeFast(q*0,g,J,J*0);
+    end
 end

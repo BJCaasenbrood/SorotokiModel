@@ -1,13 +1,12 @@
-function [Shapes, x1] = solveIK(Shapes,varargin)
+function [Shapes, x1, g] = solveIK(Shapes,varargin)
 
     Ceq  = [];
     lam0 = 1;
-    Shapes.solver.RelTolerance = 1e-3;    
-    Shapes.solver.Residual = Inf;
+    Shapes.solver.Residual  = Inf;
     Shapes.solver.Iteration = 1;
 
     solverType = 'virtual';
-    %solverType = 'dampedinverse';
+    % solverType = 'dampedinverse';
 
     rho = Shapes.solver.Regularization;
     x0 = Shapes.solver.sol.x;
@@ -49,7 +48,7 @@ function [Shapes, x1] = solveIK(Shapes,varargin)
             end
 
             if strcmpi(solverType,'virtual')
-                alpha = (1/rho.^3);
+                alpha = Shapes.solver.TimeStep;
                 dfdq1 = dfdq1 +  alpha * Q.' * b;
             elseif strcmpi(solverType,'dampedinverse')
                 dfdq1 = dfdq1 + Q.' * ( A \ b );
@@ -59,26 +58,19 @@ function [Shapes, x1] = solveIK(Shapes,varargin)
                 alpha = (1/rho.^3);
                 Qpinv = Q.' / (A);
                 grad = Shapes.system.SubTask(Shapes);
-
                 dfdq1 = dfdq1 + alpha * (eye(Shapes.NJoint) - Qpinv * Q) * grad;
             end
         end
 
         if Shapes.solver.Iteration > 1
             minL = sqrt(1+th) * lam0;
-            maxL = 0.5 * norm(x1 - x0)/norm(dfdq1 - dfdq0);
+            maxL = norm(x1 - x0)/norm(dfdq1 - dfdq0);
             lam1 = clamp(min([minL, maxL]),0,Inf);
             th   = lam1/lam0;
         else
             lam1 = lam0;
             th   = +Inf;
         end
-
-        % if  Shapes.solver.Display && (mod(Shapes.solver.Iteration,Shapes.solver.DisplayAtEvery) == 0 || ...
-        %     Shapes.solver.Iteration == 1)
-
-        %     log(Shapes.solver.Iteration, norm(b), lam1 + 1e-6);
-        % end
 
         if norm(Shapes.solver.Residual - b) <= Shapes.solver.RelTolerance
             Shapes.solver.Bisection = Shapes.solver.Bisection + 1;
