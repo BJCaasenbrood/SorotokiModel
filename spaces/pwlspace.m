@@ -4,7 +4,7 @@ X  = linspace(0,1,N).';
 Y0 = zeros(N,M);
 
 for ii = 1:M
-   Y0(:,ii) = pwl(X,ii,M); %chebyshev(X/L,ii-1); 
+   Y0(:,ii) = pwl(X,ii,M);
 end
 
 % ensure its orthonormal (gram–schmidt)
