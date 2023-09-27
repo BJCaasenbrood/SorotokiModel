@@ -1,2 +1,2 @@
 codegen curveSweepModifierFast ...
-    -args {coder.typeof(10,[inf,3]), coder.typeof(10,[inf,1]), coder.typeof(10,[4,4,inf])}
+    -args {coder.typeof(10,[inf,3]), coder.typeof(10,[inf,3]), coder.typeof(10,[inf,1]), coder.typeof(10,[4,4,inf])}

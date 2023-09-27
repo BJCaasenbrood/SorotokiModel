@@ -19,48 +19,58 @@ J   = zeros(6,nq,NNode+1);
 Jt  = zeros(6,nq,NNode+1);
 
 G(:,:,1) = SE3(Phi0, p0);
+h = S(4,1);
+t = S(2:3,1)/h;
+V = zeros(2);
+V(:,1) = 1;
+V(:,2) = (t - 0.5);
 
-for jj = 1:NNode
+Vi = inv(V);
+
+for kk = 1:NNode
 
     % % gauss quad integration for strain
-    Y1 = zeros(6,1);
+    Y = zeros(6,2);
 
     for ii = 1:NGauss
-        dXI = ( Ba * Th(:,:,ii+1,jj) ) * x + xia0(:,:,ii+1,jj);
-        Y1  = Y1 + W(ii,jj) * dXI;
+    for jj = 1:NGauss
+        dXI = 2 * h * ( ( Ba * Th(:,:,jj+1,kk) ) * x + xia0(:,:,jj+1,kk) );
+        Y(:,ii) = Vi(ii,jj) * dXI;
+    end
     end
 
-    PSI = (Y1);
+
+    PSI = Y(:,1) + (1/12) * commutator(Y(:,1), Y(:,2));
     
     % compute new G from strain integration
-    G(:,:,jj+1) = G(:,:,jj) * expmapSE3( hat( PSI ) );
+    G(:,:,kk+1) = G(:,:,kk) * expmapSE3( hat( PSI ) );
 
     % solve for J(s,t)
     % gauss quad integration for strain
     for ii = 1:NGauss
-        t  = (S(ii+1,jj) - S(1,jj)) / (S(end,jj) - S(1,jj));
-        gi(:,:,ii,jj) = interpolateSE3(G(:,:,jj), G(:,:,jj+1), t);
-        dBi = Admap(gi(1:3,1:3,ii,jj), gi(1:3,4,ii,jj)) * Ba * Th(:,:,ii+1,jj) ;
-        dB  = dB + W(ii,jj) * dBi;
+        t  = (S(ii+1,kk) - S(1,kk)) / (S(end,kk) - S(1,kk));
+        gi(:,:,ii,kk) = interpolateSE3(G(:,:,kk), G(:,:,kk+1), t);
+        dBi = Admap(gi(1:3,1:3,ii,kk), gi(1:3,4,ii,kk)) * Ba * Th(:,:,ii+1,kk) ;
+        dB  = dB + W(ii,kk) * dBi;
     end
     
     % Ad = Admap(G(1:3,1:3,jj+1),[0;0;0]) * ...
-    Ad = Admapinv( G(1:3,1:3,jj+1), G(1:3,4,jj+1) );
-    J(:,:,jj+1) = Ad * dB;
+    Ad = Admapinv( G(1:3,1:3,kk+1), G(1:3,4,kk+1) );
+    J(:,:,kk+1) = Ad * dB;
 
     % solve for Jt(s,t)
     % gauss quad integration for strain
     for ii = 1:NGauss
-        t  = (S(ii+1,jj) - S(1,jj)) / (S(end,jj) - S(1,jj));
+        t  = (S(ii+1,kk) - S(1,kk)) / (S(end,kk) - S(1,kk));
         % gi = interpolateSE3(G(:,:,jj), G(:,:,jj+1), t);
         % gi  = t * G(:,:,jj) + (1-t) * G(:,:,jj+1);
-        Ji  = t * J(:,:,jj) + (1-t) * J(:,:,jj+1);
-        dBti = ( Ba * Th(:,:,ii+1,jj) );
+        Ji  = t * J(:,:,kk) + (1-t) * J(:,:,kk+1);
+        dBti = ( Ba * Th(:,:,ii+1,kk) );
         deta = Ji * dx;
-        dBt  = dBt + W(ii,jj) * Admap(gi(1:3,1:3,ii,jj), gi(1:3,4,ii,jj)) * admap(deta) * dBti;
+        dBt  = dBt + W(ii,kk) * Admap(gi(1:3,1:3,ii,kk), gi(1:3,4,ii,kk)) * admap(deta) * dBti;
     end
 
-    Jt(:,:,jj+1) = Ad * dBt;
+    Jt(:,:,kk+1) = Ad * dBt;
 end
 
 end
