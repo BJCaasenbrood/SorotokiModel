@@ -9,6 +9,7 @@ classdef Shapes
         options;
         beamsolver;
         geometry;
+        childern;
         solver;
         system;
         pod;
@@ -35,7 +36,6 @@ function obj = Shapes(Basis,ModalDof,varargin)
     obj.options.NModal = ModalDof;
     obj.options.Table  = double(ModalDof > 0); 
     obj.options.NDof   = sum(obj.options.Table);
-    obj.options.Display = @(x) showRenderShapes(x);
 
     obj.NNode = size(Basis,1);
     obj.system.pod.PODQ = Basis;
