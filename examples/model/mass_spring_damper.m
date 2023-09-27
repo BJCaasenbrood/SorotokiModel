@@ -1,6 +1,5 @@
 clr;
-%%
-
+%
 k = 1;
 c = 0.1;
 m = 0.01;
@@ -18,4 +17,7 @@ tic;
 mdl = mdl.simulate;
 toc;
 
-plot(mdl.solver.sol.tout,mdl.solver.sol.yout);
+fig;
+plot(mdl.solver.sol.tout,...
+     mdl.solver.sol.yout,...
+     'LineW',3);
