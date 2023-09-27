@@ -30,8 +30,8 @@ function obj = Fluidics(varargin)
     
     obj.solver.RelTolerance = 1e-1;
     obj.solver.MaxIteration = 5;
-    obj.solver.Residual = zeros(obj.NDim,1);
-    obj.solver.sol.x  = zeros(obj.NDim,1);
+    obj.solver.Residual     = zeros(obj.NDim,1);
+    obj.solver.sol.x        = zeros(obj.NDim,1);
 
     obj.system.PVCurve  = @(x) (4/3) * pi * 20^3;
     obj.system.MassFlow = @(x) 1.0;
@@ -74,67 +74,5 @@ function Fluidics = setRegulator(Fluidics,varargin)
         end
     end
 end
-%--------------------------------------------------------------------- flow
-function [dx, Fluidics] = flow(Fluidics)
-
-    x = Fluidics.solver.sol.x;
-    t = Fluidics.solver.Time;
-
-    if isfield(Fluidics.solver.sol,'u')
-        u = Fluidics.solver.u;
-    else
-        u = 0;
-    end
-
-    [dx, Fluidics] = flowDynamicsFluidics(Fluidics, x(:), u(:), t);
-end
-%------------------------------------------------------------------ hessian
-function H = hessian(Fluidics)
-    
-    x = Fluidics.solver.sol.x;
-    t = Fluidics.solver.Time;
-
-    if isfield(Fluidics.solver.sol,'u')
-        u = Fluidics.solver.u;
-    else
-        u = 0;
-    end
- 
-    eps = 1e-6;
-    H   = zeros(Fluidics.NDim);
-    f0  = flowDynamicsFluidics(Fluidics,x,u,t);
-    dx  = eye(Fluidics.NDim)*eps;
-    
-    for ii = 1:Fluidics.NDim
-        f1 = flowDynamicsFluidics(Fluidics, x + dx(:,ii),u,t);
-        H(:,ii) = (f1 - f0)/eps;
-    end
- 
 end
 end
-end
-
-
-    % properties (Access = public)
-    %     NDim;         % state dimensions
-    %     NInput;       % input dimension
-    %     Nonlinear;    % nonlinear true
-    %     X0;           % initial conditions
-        
-    %     Type;         % Mass or Pressure regulated
-    %     isRegulated;  % Internal controller
-       
-    %     Polytropic;   % Polytropic coefficient
-    %     GasConstant;  % Gas constant in mJ * K-1 * mol-1
-    %     Temperature;  % Temperature
-    %     Atmosphere;   % Atmosphere pressure (1 bar)
-    %     Leakage;      % Leakage (kpa / s)
-
-    %     Kp;           % Fluidic P-action gain
-    %     Ki;           % Fluidic I-action gain
-
-    %     Volume;       % Volume function
-    %     MassFlow;     % Mass-vs-pressure flow
-        
-    %     Log;          % log file
-    % end

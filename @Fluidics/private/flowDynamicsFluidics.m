@@ -5,9 +5,14 @@ function [dx, Fluidics] = flowDynamicsFluidics(Fluidics, x, u, t)
 
     u = Fluidics.system.Control(Fluidics);
 
+    if isfield(Fluidics.system,'P')
+        J  = Fluidics.system.P;
+    else
+        J = 0;
+    end
+
     if numel(u) == 1
         e  = u - x(1);
-        J  = 1;
         dJ = 0;
     elseif numel(u) == 2
         e  = u(1) - x(1);
