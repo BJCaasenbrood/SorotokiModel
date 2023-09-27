@@ -34,9 +34,9 @@ function Shapes = assembleBoundaryShapes(Shapes)
     if Shapes.options.isSelfContact
         [Fsc, Fst, Ksn, Dsn] = assembleSelfContactShapes(Shapes);
         %Shapes.system.Tangent = Shapes.system.Tangent + Ksn;  
-        Shapes.system.Damping = Shapes.system.Damping + Dsn;     
-        Shapes.system.fDamping = Shapes.system.fDamping ...
-            + Dsn * Shapes.solver.sol.dx;
+        % Shapes.system.Damping = Shapes.system.Damping + Dsn;     
+        % Shapes.system.fDamping = Shapes.system.fDamping ...
+            % + Dsn * Shapes.solver.sol.dx;
     end
 
     

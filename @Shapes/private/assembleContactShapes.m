@@ -4,11 +4,8 @@ omegaN = Shapes.Material.getContactReaction;
 omegaT = Shapes.Material.getContactTangentReaction;
 mu     = Shapes.Material.getContactFriction;
 
-if isempty(Shapes.options.ContactDistance)
-    R = adaptiveDistanceMeasure(Shapes);
-else
-    R = Shapes.options.ContactDistance * ones(Shapes.NNode,1);
-end
+% get the minimal radius from the contact spheres
+R = Shapes.system.ContactMesh.ContactDistance;
 
 Knc = sparse(Shapes.NJoint,Shapes.NJoint);
 Ktc = sparse(Shapes.NJoint,Shapes.NJoint);
@@ -24,14 +21,16 @@ Y   = backbone(g);
 J   = Shapes.system.Jacobian;
 Eta = Shapes.system.Velocity;
 
-eps = Shapes.solver.TimeStep * 10;
-d   = SDF.eval(Y);
+% eps = Shapes.solver.TimeStep;
+eps = 1.0;
+d = SDF.eval(Y);
 Intersect = find((d(:,end) - R) < eps );
 
 if ~isempty(Intersect)
   I = Intersect;
 
-  [t,N,b] = SDF.normal(Y(I,:));
+  % compute normal, tangent, binormal
+  [N,t,b] = SDF.gradient(Y(I,:));
 
   V0 = Eta(4:6,:,I); 
   T  = zeros(3,1,numel(I));
@@ -43,7 +42,7 @@ if ~isempty(Intersect)
   end
 
   % contact penalty function
-  gn = clamp(d(I,end) - R(I), -Inf, Shapes.solver.TimeStep * 10);
+  gn = clamp(d(I,end) - R(I), -Inf, 1e-3);
 
   Ux = gn.*N(:,1);
   Uy = gn.*N(:,2);
@@ -59,7 +58,7 @@ if ~isempty(Intersect)
   GN = zeros(1,1,numel(I)); CT = GN; GT = GN;
   GN(1,1,:) = gn;
   GT(1,1,:) = gt;
-  CT(1,1,:) = ~cType;
+  CT(1,1,:) = cType;
 
   Fcont = zeros(3,1,numel(I));
   Fcont(1,:,:) = -omegaN * Ux;
@@ -94,25 +93,6 @@ if ~isempty(Intersect)
 end
 end
 
-function R = adaptiveDistanceMeasure(Shapes)
-    
-    TubeRadiusA = Shapes.geometry.TubeRadiusA;
-    TubeRadiusB = Shapes.geometry.TubeRadiusB;
-    TubeRamp  = Shapes.geometry.TubeRamp;
-    
-    ramp = min(max(TubeRamp,1e-6),1-1e-6);
-    rmax = max(TubeRadiusA,TubeRadiusB);
-    
-    if numel(ramp) == 1
-      R = rmax * linspace(1,1-ramp,Shapes.NNode);
-    else
-      x = linspace(0,1,numel(ramp));
-      y = linspace(0,1,Shapes.NNode);
-      R = rmax * interp1(x,ramp(:),y);
-    end
-    
-    R = R(:);
-end
 
 function Y = planeprojectVelocity(n1, n2, v)
     

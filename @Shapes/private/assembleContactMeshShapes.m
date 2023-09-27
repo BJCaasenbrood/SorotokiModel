@@ -1,39 +1,28 @@
 function Shapes = assembleContactMeshShapes(Shapes)
-
+    
+    curve = Shapes.beamsolver.Space * Shapes.Length;
     TubeRadiusA = Shapes.geometry.TubeRadiusA;
     TubeRadiusB = Shapes.geometry.TubeRadiusB;
-    TubeRadiusAlpha = Shapes.geometry.TubeRadiusAlpha;
-    TubeRamp = Shapes.geometry.TubeRamp;
+    TubeRamp  = Shapes.geometry.TubeRamp;
     
-    p0 = Shapes.beamsolver.g0(1:3,4);
-    g  = string(Shapes,zeros(Shapes.NJoint,1));
+    ramp = min(max(TubeRamp,1e-6),1-1e-6);
+    rmax = max(TubeRadiusA,TubeRadiusB);
     
-    Node = [p0.'; reshape(g(1:3,4,1:end),3,[]).'];
-    
-    L = sum(sqrt(sum(diff(Node).^2,2))) + ...
-        Shapes.Length/Shapes.NNode;
-    
-    [x,y,z] = rtubeplot(Node.',...
-        TubeRadiusA,...
-        TubeRadiusB,...
-        TubeRadiusAlpha,...
-        16,1e-6,...
-        TubeRamp);
-    
-    fv = surf2patch(x,y,z,'triangles');
-    V  = unique(fv.vertices,'rows');
-
-    [xy,~,t] = distance2curve(Node,V);
-
-    relNode = V - xy;
-
-    Shapes.system.ContactMesh = struct;
-    Shapes.system.ContactMesh.g  = zeros(4,4,numel(t));
-    Shapes.system.ContactMesh.Ia = round(t * Shapes.NNode);
-
-    for ii = 1:numel(t)
-        Shapes.system.ContactMesh.g(1:4,1:4,ii) = eye(4);
-        Shapes.system.ContactMesh.g(1:3,4,ii) = relNode(ii,:);
+    if numel(ramp) == 1
+      R = rmax * linspace(1,1-ramp,Shapes.NNode);
+    else
+      x = linspace(0,1,numel(ramp));
+      y = linspace(0,1,Shapes.NNode);
+      R = rmax * interp1(x,ramp(:),y);
     end
+    
+    % R is the radius without rounded end-cap
+    R = R(:);
+
+    % end has no contact sphere
+    R(end) = 1e-3;
+
+    Shapes.system.ContactMesh.Node = curve;
+    Shapes.system.ContactMesh.ContactDistance = R;
 
 end
