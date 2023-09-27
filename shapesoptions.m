@@ -48,6 +48,7 @@ classdef shapesoptions
             obj.isOrthonormal       = true;
             obj.isSelfContact       = false;
             obj.Quality             = 60;
+            obj.Display             = @(x) x.show();
         end
     end
 end

@@ -35,12 +35,12 @@ classdef beamoptions
         Mtt;
         Dtt;
 
-        % ThetaEval;
-        % ActuatorEval;
-        % Xi0Eval;
-        % KttEval;
-        % MttEval;
-        % DttEval;
+        ThetaEval;
+        ActuatorEval;
+        Xi0Eval;
+        KttEval;
+        MttEval;
+        DttEval;
     end
     
     methods
@@ -62,7 +62,7 @@ classdef beamoptions
             obj.g0            = eye(4);
             obj.Xi0           = [0,0,0,1,0,0].';
 
-            obj.GaussPrecisionLocal  = 10;
+            obj.GaussPrecisionLocal  = 2;
         end
     end
 end

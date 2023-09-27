@@ -7,6 +7,7 @@ classdef geometryoptions
         TubeRadiusAlpha; 
         TubeRamp;        
         IKList;
+        Node0;
     end
     
     methods
@@ -19,6 +20,7 @@ classdef geometryoptions
             obj.TubeRadiusAlpha = 1e-6;
             obj.TubeRamp        = 0;
             obj.IKList          = [];
+            obj.Node0           = [];
         end
     end
 end
