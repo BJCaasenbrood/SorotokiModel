@@ -13,8 +13,9 @@ for ii = 1:6
 end
 
 Shapes.NJoint = sum(Shapes.options.NModal);
-Shapes.NDim  = 2*Shapes.NJoint;
-Shapes.solver.sol.x  = zeros(Shapes.NJoint,1) + 1e-6;
+Shapes.NDim   = 2 * Shapes.NJoint;
+
+Shapes.solver.sol.x  = zeros(Shapes.NJoint,1);
 Shapes.solver.sol.dx = zeros(Shapes.NJoint,1);
 
 Shapes.beamsolver.DofMap = I6(:,Xa);
@@ -41,19 +42,17 @@ Ktt = 4.15*diag(voightextraction(Ktt));
 % Nu = Shapes.Material.Nu;
 % G  = E/(2*(Nu+1));
 % KK = pi*diag([G,E,E,E,G,G]);
+
 Jsec = blkdiag(Shapes.beamsolver.Jtt,Shapes.beamsolver.Att*eye(3));
-Shapes.beamsolver.Ktt = diag(diag(Jsec))*Ktt;
+Shapes.beamsolver.Ktt = diag(diag(Jsec)) * Ktt;
 Dsec = blkdiag(zeros(3),diag([0.1,1,1]) * Shapes.beamsolver.Att*eye(3));
 
 if isfield(Shapes.system,'Drag')
     Shapes.beamsolver.Dtt = diag(diag(Dsec)) * Shapes.system.Drag;
 else
-    Shapes.beamsolver.Dtt = diag(diag(Dsec))*0;
+    Shapes.beamsolver.Dtt = Ktt * 0;
 end
 
-% Shapes.beamsolver.Dtt = Shapes.Material.params.Zeta * ...
-%     Shapes.beamsolver.Ktt;
-  
 if ~isempty(Shapes.Fem)
     Shapes = GenerateRadialFilter(Shapes);
 end
@@ -91,44 +90,16 @@ if ~isempty(Shapes.system.pod.PODR) || ~isempty(Shapes.system.pod.PODQ)
     Shapes.system.pod.Theta = @(x) ShapeFunction(Shapes,x);
 end
 
-if ~isa(Shapes.beamsolver.Xi0,'function_handle')
-    Shapes.beamsolver.Xi0 = @(x) IntrinsicFunction(Shapes,x);   
+Xi0 = Shapes.beamsolver.Xi0;
+if numel(Xi0) == 6
+    Shapes.system.pod.Xi0 = @(x) Xi0(:);
+else
+    Shapes.system.pod.Xi0 = @(x) IntrinsicFunction(Shapes, x);
 end
 
 if ~isempty(Shapes.system.pod.Theta) 
-
-Shapes = assembleGaussQuadrature(Shapes);    
-Shapes = assembleGaussEvals(Shapes);       
-    
-% precompute Theta matrix
-FncT = @(x) Shapes.system.pod.Theta(x);
-FncX = @(x) Shapes.beamsolver.Xi0(x);
-s   = sort([Shapes.beamsolver.Space*Shapes.Length,...
-            Shapes.beamsolver.Space*Shapes.Length + ...
-            (2/3)*Shapes.beamsolver.SpaceStep]);
-
-[nx,ny] = size(FncT(0));
-Shapes.beamsolver.ThetaEval = zeros(nx,ny,numel(s));
-Shapes.beamsolver.Xi0Eval   = zeros(6,1,numel(s));
-Shapes.beamsolver.KttEval   = zeros(6,6,numel(s));
-Shapes.beamsolver.MttEval   = zeros(6,6,numel(s));
-Shapes.beamsolver.DttEval   = zeros(6,6,numel(s));
-
-for ii = 1:numel(s)
-    Shapes.beamsolver.ThetaEval(:,:,ii) = FncT(s(ii));
-    Shapes.beamsolver.Xi0Eval(:,1,ii)   = FncX(s(ii));
-    if Shapes.options.isRampCompensation
-        TubeRamp = 0.8;
-        alpha = lerp(1,1-TubeRamp,ii/numel(s));
-        Shapes.beamsolver.KttEval(:,:,ii)   = (alpha)^2 * Shapes.beamsolver.Ktt;
-        Shapes.beamsolver.MttEval(:,:,ii)   = (alpha)^2 * Shapes.beamsolver.Mtt;
-        Shapes.beamsolver.DttEval(:,:,ii)   = (alpha)^2 * Shapes.beamsolver.Dtt;
-    else
-        Shapes.beamsolver.KttEval(:,:,ii)   = Shapes.beamsolver.Ktt;
-        Shapes.beamsolver.MttEval(:,:,ii)   = Shapes.beamsolver.Mtt;
-        Shapes.beamsolver.DttEval(:,:,ii)   = Shapes.beamsolver.Dtt;
-    end
-end
+    Shapes = assembleGaussQuadrature(Shapes);    
+    Shapes = assembleGaussEvals(Shapes);        
 end
 
 if isfield(Shapes.system,'Actuator')
@@ -168,24 +139,13 @@ Shapes = compute(Shapes);
 
 end
 
-%--------------------------------------------- isomorphism from R3 to so(3)
-function y = voightextraction(X)
-    y(1,1) = X(2,3);
-    y(2,1) = 2*X(6,6);
-    y(3,1) = 2*X(6,6);
-    y(4,1) = X(1,1);
-    y(5,1) = X(2,1);
-    y(6,1) = X(3,1);
-end
-
-%---------------------------------------------------------------------- set
-function P = ShapeFunction(Shapes,X)
+%%
+function Xi = ShapeFunction(Shapes,X)
 
     k  = 1;
     X0 = Shapes.beamsolver.Space;
     Pc = cell(Shapes.options.NDof,1); 
-    %X  = zclamp(X,0,Shapes.Length); % make bounded
-    X = zclamp(X/Shapes.Length,0,1);
+    X  = zclamp(X/Shapes.Length,0,1);
 
     % construct shape-matrix 
     for jj = 1:6
@@ -203,11 +163,28 @@ function P = ShapeFunction(Shapes,X)
         end
     end
 
-    P = blkdiag(Pc{:});
+    Xi = blkdiag(Pc{:});
+end
 
+%%
+function Xi = IntrinsicFunction(Shapes,X)
+    X0 = Shapes.beamsolver.Space;
+    S0 = Shapes.beamsolver.Xi0;
+    X  = zclamp(X/Shapes.Length,0,1);
+    
+    Xi = zeros(6,1);
+
+    for jj = 1:6
+        Xi(jj) = interp1(X0, S0(:,jj), X);
+    end
 end
-%---------------------------------------------------------------------- set
-function P = IntrinsicFunction(Shapes,X)
-    P = Shapes.beamsolver.Xi0;
+
+%%
+function y = voightextraction(X)
+    y(1,1) = X(2,3);
+    y(2,1) = 2*X(6,6);
+    y(3,1) = 2*X(6,6);
+    y(4,1) = X(1,1);
+    y(5,1) = X(2,1);
+    y(6,1) = X(3,1);
 end
-%--------------------------------------------- isomorphism from R3 to so(3)

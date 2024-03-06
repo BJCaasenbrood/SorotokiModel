@@ -13,8 +13,6 @@ Fnc = sparse(Shapes.NJoint,1);
 Ftc = sparse(Shapes.NJoint,1);
 SDF = Shapes.system.Contact{1};
 
-% SDF = @(x) SDF.eval(x);
-
 g = Shapes.system.Backbone;
 
 Y   = backbone(g);
@@ -44,15 +42,15 @@ if ~isempty(Intersect)
   % contact penalty function
   gn = clamp(d(I,end) - R(I), -Inf, 1e-3);
 
-  Ux = gn.*N(:,1);
-  Uy = gn.*N(:,2);
-  Uz = gn.*N(:,3);
+  Ux = gn .* N(:,1);
+  Uy = gn .* N(:,2);
+  Uz = gn .* N(:,3);
 
   % friction penalty function (i.e, expected distance traveled)
   gt = vecnorm(Vt.').' * Shapes.solver.TimeStep;
 
   % stick-slip boolean vector
-  cType = abs(omegaT * squeeze(gt)) >= abs(mu * omegaN * gn);
+  cType = ~abs(omegaT * squeeze(gt)) >= abs(mu * omegaN * gn);
   JvT = pagetranspose(J(4:6,:,I));
 
   GN = zeros(1,1,numel(I)); CT = GN; GT = GN;

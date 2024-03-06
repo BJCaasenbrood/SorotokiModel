@@ -13,7 +13,7 @@ for ii = 1:nu
         Shapes.beamsolver.evalLocal.Theta(:,:,ii,jj) = ...
             Shapes.system.pod.Theta(Pl(ii,jj));
         Shapes.beamsolver.evalLocal.Xi0(:,:,ii,jj) = ...
-             Shapes.beamsolver.Xi0(Pl(ii,jj));          
+            Shapes.system.pod.Xi0(Pl(ii,jj));          
     end
 end
 

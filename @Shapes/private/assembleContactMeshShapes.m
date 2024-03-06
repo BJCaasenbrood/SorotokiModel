@@ -6,7 +6,7 @@ function Shapes = assembleContactMeshShapes(Shapes)
     TubeRamp  = Shapes.geometry.TubeRamp;
     
     ramp = min(max(TubeRamp,1e-6),1-1e-6);
-    rmax = max(TubeRadiusA,TubeRadiusB);
+    rmax = min(TubeRadiusA,TubeRadiusB);
     
     if numel(ramp) == 1
       R = rmax * linspace(1,1-ramp,Shapes.NNode);
