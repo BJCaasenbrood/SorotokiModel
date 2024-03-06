@@ -38,15 +38,15 @@ for jj = 1:(NNode)
         M = M + W(ii,jj) * (Ji.' * Mtt(:,:,jj) * Ji);
 
         % compute coriolis matrix
-        adV  = admap( Ji * dx );
+        adV  = admap_inline( Ji * dx );
         Ceta = Mtt(:,:,jj) * adV - adV.' * Mtt(:,:,jj);
         CdJt = Mtt(:,:,jj) * Jt(:,:,jj);
 
         C = C + W(ii,jj) * (Ji.' * ( Ceta * Ji + CdJt));
 
         % compute gravity vector
-        gi = interpolateSE3(G(:,:,jj), G(:,:,jj+1), t);
-        AdInv = Admapinv(gi(1:3,1:3),gi(1:3,1));
+        gi = interpolateSE3_inline(G(:,:,jj), G(:,:,jj+1), t);
+        AdInv = Admapinv_inline(gi(1:3,1:3),gi(1:3,1));
         fg = fg - W(ii,jj) * Ji.' * (Mtt(:,:,jj) * AdInv * grav);
 
         % compute stiffness matrix
@@ -178,40 +178,52 @@ end
 % end
 
 % end
-function Z = interpolateSE3(X,Y,t)
+function Z = interpolateSE3_inline(X,Y,t)
 
+    tol = 1e-9;
     dH = Y / X;
     R = dH(1:3,1:3);
     T = dH(1:3,4);
 
     % get log of rotation matrix
-    S = logmapSO3(R);
-    th = norm([S(3,2); S(1,3); S(2,1)]) + 1e-12;
-    Vi = eye(3) - 0.5 * S + (1/(th^2)) * (1 - (th*sin(th))/(2*(1-cos(th))))*(S*S);
+    S  = logmapSO3_inline(R, tol);
+    th = norm([S(3,2); S(1,3); S(2,1)]);
+
+    if abs(th) >= tol
+        tth = t*th;        
+        Vi  = eye(3) - 0.5 * S + (1/(th^2)) * (1 - (th*sin(th))/(2*(1-cos(th))))*(S*S);
+        Vt  = eye(3) + ((1-cos(tth))/(tth)^2)*(t*S) + ((tth - sin(tth))/((tth)^3)) * (t*S) * (t*S);
+    else
+        Vi = eye(3);
+        Vt = Vi;
+    end
+
     U  = Vi * T;
-
-    Rt = expmapSO3(t * S);
-    tth = t*th + 1e-12;
-    Vt = eye(3) + ((1-cos(tth))/(tth)^2)*(t*S) + ((tth - sin(tth))/((tth)^3)) * (t*S) * (t*S);
+    Rt = expmapSO3_inline(t * S, tol);
     Tt = t * Vt * U;
+    Z  = ([Rt,Tt;0,0,0,1]) * X;
 
-    Z = ([Rt,Tt;0,0,0,1]) * X;
 end
 
 
-function Y = logmapSO3(X)
+function Y = logmapSO3_inline(X, tol)
     S = X;
-    theta = acos(0.5*((S(1,1) + S(2,2) + S(3,3)) - 1));
-    alpha = 0.5*theta/ ( sin(theta) + 1e-12);
-    Y = alpha*(S - S.'); 
+    theta = acos(0.5*(trace(S) - 1));
+
+    if sin(theta) >= tol
+        alpha = 0.5*theta/sin(theta);
+        Y = alpha*(S - S.'); 
+    else
+        Y = zeros(3); 
+    end
 end
 
-function Y = expmapSO3(X)
+function Y = expmapSO3_inline(X, tol)
     S = X;
     X = [S(3,2); S(1,3); S(2,1)];
 
     t = norm(X);
-    if abs(t) >= 1e-12
+    if abs(t) >= tol
         a = sin(t)/t;
         b = (1-cos(t))/(t*t);
         
@@ -221,28 +233,13 @@ function Y = expmapSO3(X)
     end
 end
 
-function Y = tmapSO3(X)
-    S = X;
-    X = [S(3,2); S(1,3); S(2,1)];
-
-    t = norm(X);
-    if abs(t) >= 1e-6
-        a = sin(t)/t;
-        b = (1-cos(t))/(t*t);
-        
-        Y = eye(3) + b*S + (1/(t*t))*(1-a)*S*S;
-    else
-        Y = eye(3);
-    end
-end
-
-function g = admap(x)
-    Wh = skew(x(1:3));
-    Uh = skew(x(4:6));
+function g = admap_inline(x)
+    Wh = skew_inline(x(1:3));
+    Uh = skew_inline(x(4:6));
     g = [Wh, zeros(3); Uh, Wh];
 end
 
-function Ad = Admap(R,p)
+function Ad = Admap_inline(R,p)
     x1 = p(1); x2 = p(2); x3 = p(3);
     S  = [0, -x3, x2; x3, 0, -x1; -x2, x1, 0];    
     Ad = zeros(6);
@@ -251,7 +248,7 @@ function Ad = Admap(R,p)
     Ad(4:6,1:3) = S * R;
 end
 
-function Ad = Admapinv(R,p)
+function Ad = Admapinv_inline(R,p)
     Rt = R.';
     x1 = p(1); x2 = p(2); x3 = p(3);
     S  = [0, -x3, x2; x3, 0, -x1; -x2, x1, 0];   
@@ -261,21 +258,21 @@ function Ad = Admapinv(R,p)
     Ad(4:6,1:3) = Rt*S.';
 end
 
-function Y = hat(X)
-    if numel(X) == 6
-        S = skew(X(1:3));
-        U = X(4:6);
+% function Y = hat(X)
+%     if numel(X) == 6
+%         S = skew(X(1:3));
+%         U = X(4:6);
         
-        Y = zeros(4,4);
-        Y(1:3,1:3) = S;
-        Y(1:3,4)   = U;
+%         Y = zeros(4,4);
+%         Y(1:3,1:3) = S;
+%         Y(1:3,4)   = U;
         
-    elseif numel(X) == 3
-        Y = skew(X);
-    end
-end
+%     elseif numel(X) == 3
+%         Y = skew(X);
+%     end
+% end
 
-function y = skew(x)
+function y = skew_inline(x)
     x1 = x(1); x2 = x(2); x3 = x(3);
     y = [0, -x3, x2; 
         x3, 0, -x1; 
