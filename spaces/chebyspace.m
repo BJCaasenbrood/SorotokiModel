@@ -1,4 +1,4 @@
-function [Y,X] = chebyspace(N,M,varargin)
+function [Y, X] = chebyspace(N,M,varargin)
 % loop over functional space
 X = linspace(0,1,N).';
 Y = zeros(N,M);

@@ -6,7 +6,7 @@ In     = eye(Model.NDim);
 NSteps = round(Model.solver.TimeHorizon/Model.solver.TimeStep);
 
 if Model.solver.isLog
-    progBar = ProgressBar(NSteps + 1,'Title', 'Solving...');
+    % progBar = ProgressBar(NSteps + 1,'Title', 'Solving...');
 end
 
 Model.solver.Time = 0;
@@ -85,7 +85,7 @@ while Model.solver.Time < Model.solver.TimeHorizon
     end
 
     if Model.solver.isLog
-        progBar([], [], []);
+        % progBar([], [], []);
     end
 
     step = Model.solver.SubIteration;
@@ -100,8 +100,8 @@ while Model.solver.Time < Model.solver.TimeHorizon
 end
 
 if Model.solver.isLog
-    progBar.release();
-    fprintf('\n');
+    % progBar.release();
+    % fprintf('\n');
 end
 
 end

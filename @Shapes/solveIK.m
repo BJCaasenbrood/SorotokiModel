@@ -5,8 +5,8 @@ function [Shapes, x1, g] = solveIK(Shapes,varargin)
     Shapes.solver.Residual  = Inf;
     Shapes.solver.Iteration = 1;
 
-    solverType = 'virtual';
-    % solverType = 'dampedinverse';
+    % solverType = 'virtual';
+    solverType = 'dampedinverse';
 
     rho = Shapes.solver.Regularization;
     x0 = Shapes.solver.sol.x;

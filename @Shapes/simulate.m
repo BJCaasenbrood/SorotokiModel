@@ -9,7 +9,7 @@ function Shapes = simulate(Shapes, varargin)
     
     NSteps = round(Shapes.solver.TimeHorizon/Shapes.solver.TimeStep);
     if Shapes.solver.isLog
-        progBar = ProgressBar(NSteps + 1,'Title', 'Solve dynamic FEM');
+        % progBar = ProgressBar(NSteps + 1,'Title', 'Solve dynamic FEM');
     end
 
     Shapes.solver.Time = 0;
@@ -96,7 +96,7 @@ function Shapes = simulate(Shapes, varargin)
         end
 
         if Shapes.solver.isLog
-            progBar([], [], []);
+            % progBar([], [], []);
         end
 
         step = Shapes.solver.SubIteration;
@@ -120,8 +120,8 @@ function Shapes = simulate(Shapes, varargin)
     end
 
     if Shapes.solver.isLog
-        progBar.release();
-        fprintf('\n');
+        % progBar.release();
+        % fprintf('\n');
     end
     
 end

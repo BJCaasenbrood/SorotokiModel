@@ -4,7 +4,7 @@ if nargin > 1
     Shapes.solver.TimeStep = varargin{1};
 end    
 
-rho    = 1.0;
+rho    = 0.25;
 alphaM = (2*rho - 1)/(rho + 1);
 alphaF = (rho)/(rho + 1);
 

@@ -4,7 +4,7 @@ function [g, J] = string(Shapes,q,varargin)
             'with POD matrix. Please check your input dimensions dim(q).']);
     
     % ensures robustness for near-zero singularities in some PCC models
-    q = q(:) + 1e-12;
+    q = q(:);
     % if isempty(varargin)
     % [g, J] = computeForwardKinematicsFast_mex(q,q*0,... % states
     %     Shapes.beamsolver.SpaceStep,...         % spatial steps

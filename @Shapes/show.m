@@ -24,8 +24,10 @@ function Shapes = show(Shapes,varargin)
 
         Shapes.geometry.Node0 = Node;
         
-        [x,y,z] = rtubeplot(Node.', TubeRadiusA,...
-            TubeRadiusB, TubeAlpha, 16, 1e-6, TubeRamp);    
+        % [x,y,z] = rtubeplot(Node.', TubeRadiusA,...
+        %     TubeRadiusB, TubeAlpha, 16, 1e-6, TubeRamp);    
+
+        [x,y,z] = tubeplot(Node.', TubeRadiusA, 16, 1e-6);       
         
         fv = surf2patch(x,y,z,'triangles');
         v = fv.vertices;
@@ -42,6 +44,7 @@ function Shapes = show(Shapes,varargin)
     g  = string(Shapes, q);
     G0 = pagemtimes(inv(SE3(R0,p0)), g);
 
+    drawnow limitrate nocallbacks 
     if ~isempty(Shapes.childern)
         for ii = 1:size(Shapes.childern,1)
             obj = Shapes.childern{ii,1};
@@ -50,22 +53,22 @@ function Shapes = show(Shapes,varargin)
             if isa(obj,'Shapes')
                 g0 = obj.beamsolver.g0;
                 obj.beamsolver.g0 = g(:,:,id) * g0;
-                obj = obj.show();
+                obj.show();
                 obj.beamsolver.g0 = g0;
             elseif isa(obj,'Gmodel')
                 Node0 = obj.Node0;
                 obj.Node = (g(1:3,1:3,id)*Node0.' + g(1:3,4,id)).';
-                obj = obj.update();
+                obj.update();
             end
-
-            Shapes.childern{ii,1} = obj;
         end    
     end
+
+    drawnow;
 
     G = curveSweepModifierFast_mex(Shapes.Gmodel.Node0, ...
         Shapes.geometry.Node0,Shapes.geometry.IKList,G0);
     
     Shapes.Gmodel.Node = backbone(pagemtimes(SE3(R0,p0), G));
-    % Shapes.Gmodel.updateNode();
+    Shapes.Gmodel.updateNode();
     Shapes.Gmodel.update();
 end

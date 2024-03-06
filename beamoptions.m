@@ -60,7 +60,7 @@ classdef beamoptions
             obj.SpaceHorizon  = 1;
             obj.SpaceStep     = 1e-3;
             obj.g0            = eye(4);
-            obj.Xi0           = [0,0,0,1,0,0].';
+            obj.Xi0           = [0,0,0,1,0,0];
 
             obj.GaussPrecisionLocal  = 2;
         end
