@@ -60,7 +60,9 @@ for jj = 1:NNode
         dBt  = dBt + W(ii,jj) * Admap_inline(gi(1:3,1:3,ii,jj), gi(1:3,4,ii,jj)) * admap_inline(deta) * dBti;
     end
 
-    Jt(:,:,jj+1) = Ad * dBt;
+    eta = J(:,:,jj+1) * dx;
+    ad = admap_inline(eta);
+    Jt(:,:,jj+1) = -ad * J(:,:,jj+1) + Ad * dBt;
 end
 
 end
