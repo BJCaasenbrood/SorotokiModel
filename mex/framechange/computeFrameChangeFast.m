@@ -16,7 +16,7 @@ function [Jn, Jtn, Etan] = computeFrameChangeFast(dx,...
         Ad = Admap(G(1:3,1:3,ii), o3);
 
         % reorient Jacobian 
-        J0 = Ad* J(:,:,ii);
+        J0 = Ad * J(:,:,ii);
         Jn(:,:,ii) = J0;
 
         % compute velocity twist
@@ -24,15 +24,14 @@ function [Jn, Jtn, Etan] = computeFrameChangeFast(dx,...
         Etan(:,:,ii) = V0;
 
         adV = admap(V0); 
-        V0(4:6) = 0; % assume fixed frame
-        adV_ = admap(V0); % assume fixed frame
+        V0(4:6) = 0;        % assume fixed frame
+        adV_ = admap(V0);   % assume fixed frame
         dJdt = Ad*adV_*J0 + ... % world-frame dJacobian/dt
                Ad*(-adV*J0 + Jt(:,:,ii));
 
         Jtn(:,:,ii) = dJdt;
     end
 end
-
 
 function g = admap(x)
     Wh = skew(x(1:3));
