@@ -27,7 +27,8 @@ if Shapes.solver.Time < Shapes.solver.TimeStep
     
         A = Shapes.system.Mass;
         b = - Shapes.system.fResidual - (Shapes.system.Damping ...
-            + Shapes.system.Coriolis + Shapes.system.Viscous ) * Shapes.solver.sol.dx;
+            + Shapes.system.Coriolis + Shapes.system.Viscous ) ...
+            * Shapes.solver.sol.dx;
     
         Shapes.solver.sol.ddx = A \ b;
     end

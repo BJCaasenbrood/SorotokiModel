@@ -83,7 +83,7 @@ Shapes.system.fBody      = beta * fg_;
 Shapes.system.fElastic   = K_ * Q;
 Shapes.system.fDamping   = R_ * dQ;
 Shapes.system.fCoriolis  = C_ * dQ;
-Shapes.system.fDrag      = -D_ * dQ;
+Shapes.system.fDrag      = D_ * dQ;
 
 if isfield(Shapes.system,'Actuator')
     Shapes.system.Input = G;
