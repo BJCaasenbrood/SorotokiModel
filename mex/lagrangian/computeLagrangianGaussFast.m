@@ -1,6 +1,6 @@
 %#codegen
 % [M,C,K,R,Dc,G,B,p,Phi,J,dJdt,Vg,Kin]
-function [M, C, K, fg] = computeLagrangianGaussFast(x,dx,...          % states
+function [M, C, K, fg, D] = computeLagrangianGaussFast(x, dx,...          % states
     G,...
     J,...       % evaluated Jacobian matrix
     Jt,...      % evalatured time-Jacobian
@@ -8,7 +8,7 @@ function [M, C, K, fg] = computeLagrangianGaussFast(x,dx,...          % states
     Ba,...      % strain mapping
     Mtt,...     % geometric inertia tensor
     Ktt,...     % geometric stiffness tensor
-    Dctt,...    % drag tensor
+    Dvec,...    % drag parameter vector
     Gvec,...    % gravity vector
     W,...       % gauss weights
     S)          % gauss pts)        
@@ -17,12 +17,22 @@ function [M, C, K, fg] = computeLagrangianGaussFast(x,dx,...          % states
 NNode  = size(W,2);
 NGauss = size(W,1);
 nq     = numel(x);
+L      = max(S(:));
 
 % initialize 
 M  = zeros(nq);
 C  = zeros(nq);
 K  = zeros(nq);
+D  = zeros(nq);
 fg = zeros(nq,1);
+fd = zeros(nq,1);
+
+% drag coefficients
+RhoD = Dvec(1);
+Ct = Dvec(2);
+Cp = Dvec(3);
+R0 = Dvec(4);
+alph = Dvec(5);
 
 % construct gravity vector
 grav = [0; 0; 0; Gvec];
@@ -38,7 +48,8 @@ for jj = 1:(NNode)
         M = M + W(ii,jj) * (Ji.' * Mtt(:,:,jj) * Ji);
 
         % compute coriolis matrix
-        adV  = admap_inline( Ji * dx );
+        eta  = Ji * dx;
+        adV  = admap_inline(eta);
         Ceta = Mtt(:,:,jj) * adV - adV.' * Mtt(:,:,jj);
         CdJt = Mtt(:,:,jj) * Jt(:,:,jj);
 
@@ -52,6 +63,19 @@ for jj = 1:(NNode)
         % compute stiffness matrix
         dBti = ( Ba * Th(:,:,ii+1,jj) );
         K = K + W(ii,jj) * dBti.' * Ktt(:,:,jj) * dBti;
+
+        % compute viscous drag
+        Rs = (1 - alph*(S(ii,jj) / L)) * R0;
+        At = 2 * pi * Rs;
+        Ap = 2 * Rs;
+
+        % deriv of R*[(J dq) .* abs(J * dq)]
+        etat  = eta(4:6);
+        dV2dq = Ji(4:6,:) .* abs(etat) + etat .* sign(etat) .* Ji(4:6,:);
+
+        % Fd = Fd - 0.5 * RhoD * Ji.' * ([Ct*At; Cp*Ap; Cp*Ap] .* V2);    
+        D = D + 0.5 * W(ii,jj) * RhoD * Ji(4:6,:).' * ([Ct*At; Cp*Ap; Cp*Ap] .* dV2dq);
+        % fd = fd - W(ii,jj) * Dctt * Ji.' * norm(eta(4:6))
     end
 end
 
