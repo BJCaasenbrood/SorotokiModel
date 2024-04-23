@@ -19,7 +19,7 @@ end
 
 for ii = 1:nw
     if Shapes.options.isRampCompensation
-        TubeRamp = 0.8;
+        TubeRamp = Shapes.geometry.TubeRamp;
         alpha = lerp(1,1-TubeRamp,ii/numel(Shapes.NNode));
         Shapes.beamsolver.evalLocal.KttEval(:,:,ii) = (alpha)^2 * Shapes.beamsolver.Ktt;
         Shapes.beamsolver.evalLocal.MttEval(:,:,ii) = (alpha)^2 * Shapes.beamsolver.Mtt;

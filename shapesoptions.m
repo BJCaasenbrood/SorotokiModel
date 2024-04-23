@@ -42,7 +42,7 @@ classdef shapesoptions
             obj.Texture             = []; 
             obj.loadingFactor       = []; 
             obj.FilterRadius        = 10;
-            obj.isVolumetricContact = true;
+            obj.isVolumetricContact = false;
             obj.ContactDistance     = [];
             obj.isRampCompensation  = true;
             obj.isOrthonormal       = true;

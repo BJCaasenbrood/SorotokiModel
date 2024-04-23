@@ -4,7 +4,7 @@ if nargin > 1
     Shapes.solver.TimeStep = varargin{1};
 end    
 
-rho    = 0.25;
+rho    = 1.0;
 alphaM = (2*rho - 1)/(rho + 1);
 alphaF = (rho)/(rho + 1);
 
@@ -27,7 +27,7 @@ if Shapes.solver.Time < Shapes.solver.TimeStep
     
         A = Shapes.system.Mass;
         b = - Shapes.system.fResidual - (Shapes.system.Damping ...
-            + Shapes.system.Coriolis ) * Shapes.solver.sol.dx;
+            + Shapes.system.Coriolis + Shapes.system.Viscous ) * Shapes.solver.sol.dx;
     
         Shapes.solver.sol.ddx = A \ b;
     end

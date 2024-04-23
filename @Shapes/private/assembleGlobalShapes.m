@@ -8,6 +8,19 @@ if ~isempty(Shapes.options.loadingFactor)
    beta = Shapes.options.loadingFactor;
 end
 
+if ~isfield(Shapes.system,'Drag')
+    RhoD = 0;
+    Ct = 0.0;
+    Cp = 0.0;
+else
+    RhoD = Shapes.system.Drag.params.Rho;
+    Ct = Shapes.system.Drag.params.Ct;
+    Cp = Shapes.system.Drag.params.Cp;
+end
+
+ViscousDragParameters = [RhoD; Ct; Cp; 
+    Shapes.geometry.TubeRadiusA; Shapes.geometry.TubeRamp];
+
 % compute the forward kinematics beam, jacobian and dJacdt
 [g, J, Jt] = computeForwardKinematicsGaussFast_mex(Q,dQ,...
     Shapes.beamsolver.g0(1:3,4),...         % position zero
@@ -19,7 +32,7 @@ end
     Shapes.beamsolver.evalLocal.points);    % gauss weights    
 
 % compute inertia, coriolis, stiffness and gravity vector
-[M_, C_, K_, fg_] = computeLagrangianGaussFast_mex(Q,dQ,...
+[M_, C_, K_, fg_, D_] = computeLagrangianGaussFast_mex(Q,dQ,...
     g,...       
     J,...       
     Jt,...      
@@ -27,7 +40,7 @@ end
     Shapes.beamsolver.DofMap,...          
     Shapes.beamsolver.evalLocal.MttEval,...
     Shapes.beamsolver.evalLocal.KttEval,...
-    Shapes.beamsolver.evalLocal.DttEval,...
+    ViscousDragParameters,...
     Shapes.system.Gravity,...
     Shapes.beamsolver.evalLocal.weights,...
     Shapes.beamsolver.evalLocal.points);         
@@ -55,7 +68,7 @@ gg = 0;
 Shapes.system.Mass       = M_;
 Shapes.system.Damping    = R_;
 Shapes.system.Coriolis   = C_;
-Shapes.system.Viscous    = K_ * 0;
+Shapes.system.Viscous    = D_;
 Shapes.system.Stiffness  = K_;
 Shapes.system.Tangent    = K_ + beta * gg;
 
@@ -70,7 +83,7 @@ Shapes.system.fBody      = beta * fg_;
 Shapes.system.fElastic   = K_ * Q;
 Shapes.system.fDamping   = R_ * dQ;
 Shapes.system.fCoriolis  = C_ * dQ;
-Shapes.system.fDrag      = 0*K_ * dQ;
+Shapes.system.fDrag      = -D_ * dQ;
 
 if isfield(Shapes.system,'Actuator')
     Shapes.system.Input = G;

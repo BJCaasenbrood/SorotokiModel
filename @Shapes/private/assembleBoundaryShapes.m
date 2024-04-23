@@ -5,6 +5,7 @@ function Shapes = assembleBoundaryShapes(Shapes)
     Ftc = sparse(Shapes.NJoint,1);  % init tangent contact force
     Fsc = sparse(Shapes.NJoint,1);  % init normal contact force
     Fst = sparse(Shapes.NJoint,1);  % init normal contact force
+    Fd  = sparse(Shapes.NJoint,1);  % init drag force vector
     F   = sparse(Shapes.NJoint,1);  % init global force vector
     
     % adding controller loads
@@ -39,6 +40,11 @@ function Shapes = assembleBoundaryShapes(Shapes)
             % + Dsn * Shapes.solver.sol.dx;
     end
 
+    % if isfield(Shapes.system,'Drag')
+    %     [Fd, Dd] = assembleDragForceShapes(Shapes);
+    %     Shapes.system.fDrag = Fd;
+    %     Shapes.system.Damping = Shapes.system.Damping + Dd;     
+    % end
     
     Shapes.system.fContact = Fnc + Fsc + Fst;
     Shapes.system.fTangent = Ftc;
