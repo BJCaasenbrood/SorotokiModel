@@ -24,11 +24,9 @@ function Shapes = show(Shapes,varargin)
 
         Shapes.geometry.Node0 = Node;
         
-        % [x,y,z] = rtubeplot(Node.', TubeRadiusA,...
-        %     TubeRadiusB, TubeAlpha, 16, 1e-6, TubeRamp);    
+        [x,y,z] = rtubeplot(Node.', TubeRadiusA,...
+            TubeRadiusB, TubeAlpha, 16, 1e-6, TubeRamp);    
 
-        [x,y,z] = tubeplot(Node.', TubeRadiusA, 16, 1e-6);       
-        
         fv = surf2patch(x,y,z,'triangles');
         v = fv.vertices;
         f = fv.faces;
