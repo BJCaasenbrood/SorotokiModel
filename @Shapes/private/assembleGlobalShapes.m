@@ -2,16 +2,16 @@ function Shapes = assembleGlobalShapes(Shapes)
 
 Q  = Shapes.solver.sol.x;
 dQ = Shapes.solver.sol.dx;
+G0 = Shapes.solver.sol.g0;
 
-beta = 1;
 if ~isempty(Shapes.options.loadingFactor)
    beta = Shapes.options.loadingFactor;
+else
+   beta = 1;
 end
 
 if ~isfield(Shapes.system,'Drag')
-    RhoD = 0;
-    Ct = 0.0;
-    Cp = 0.0;
+    [RhoD, Ct, Cp] = deal(0);
 else
     RhoD = Shapes.system.Drag.params.Rho;
     Ct = Shapes.system.Drag.params.Ct;
@@ -22,22 +22,24 @@ ViscousDragParameters = [RhoD; Ct; Cp;
     Shapes.geometry.TubeRadiusA; Shapes.geometry.TubeRamp];
 
 % compute the forward kinematics beam, jacobian and dJacdt
-[g, J, Jt] = computeForwardKinematicsGaussFast_mex(Q,dQ,...
-    Shapes.beamsolver.g0(1:3,4),...         % position zero
-    Shapes.beamsolver.g0(1:3,1:3),...       % phi zeroclc
+[g, J, Jt] = computeFreeForwardKinematicsGaussFast(Q,dQ,...
+    G0(1:3,4),...         % position zero
+    G0(1:3,1:3),...       % phi zero
     Shapes.beamsolver.evalLocal.Xi0,...     % intrinsic strain vector
     Shapes.beamsolver.evalLocal.Theta,...   % evaluated Theta matrix
     Shapes.beamsolver.DofMap,...            % dof to strain mapping
-    Shapes.beamsolver.evalLocal.weights,...
-    Shapes.beamsolver.evalLocal.points);    % gauss weights    
+    Shapes.beamsolver.BaseDofMap,...        % dof to base vel mapping
+    Shapes.beamsolver.evalLocal.weights,... % gauss weights
+    Shapes.beamsolver.evalLocal.points);    % gauss points    
+
+% keyboard;
 
 % compute inertia, coriolis, stiffness and gravity vector
-[M_, C_, K_, fg_, D_] = computeLagrangianGaussFast_mex(Q,dQ,...
-    g,...       
-    J,...       
-    Jt,...      
+[M_, C_, K_, fg_, D_] = computeFreeLagrangianGaussFast_mex(Q,dQ,...
+    g, J, Jt,...      
     Shapes.beamsolver.evalLocal.Theta,...          
-    Shapes.beamsolver.DofMap,...          
+    Shapes.beamsolver.DofMap,... 
+    Shapes.beamsolver.BaseDofMap,... 
     Shapes.beamsolver.evalLocal.MttEval,...
     Shapes.beamsolver.evalLocal.KttEval,...
     ViscousDragParameters,...
@@ -51,26 +53,13 @@ ViscousDragParameters = [RhoD; Ct; Cp;
 % derive damping matrix from stiffness matrices
 R_ = K_ * Shapes.Material.params.Zeta;
 
-gg = 0;
-% if ( norm(Shapes.system.Gravity) > 0 ) && Shapes.solver.Iteration < 2
-% [gg] = computeGradientGvecFast_mex(Q,...
-%     Shapes.beamsolver.SpaceStep,...    % spatial steps
-%     Shapes.beamsolver.g0(1:3,4),...    % position zero
-%     Shapes.beamsolver.g0(1:3,1:3),...  % phi zeroclc
-%     Shapes.beamsolver.Xi0Eval,...      % intrinsic strain vector
-%     Shapes.beamsolver.ThetaEval,...    % evaluated Theta matrix
-%     Shapes.beamsolver.DofMap,...
-%     Shapes.beamsolver.MttEval,...
-%     Shapes.system.Gravity);
-% end
-
 % assign dynamic variables
-Shapes.system.Mass       = M_;
-Shapes.system.Damping    = R_;
-Shapes.system.Coriolis   = C_;
-Shapes.system.Viscous    = D_;
-Shapes.system.Stiffness  = K_;
-Shapes.system.Tangent    = K_ + beta * gg;
+Shapes.system.Mass      = M_;
+Shapes.system.Damping   = R_;
+Shapes.system.Coriolis  = C_;
+Shapes.system.Viscous   = D_;
+Shapes.system.Stiffness = K_;
+Shapes.system.Tangent   = K_;
 
 % assign kinematic variables
 Shapes.system.Jacobian   = J;

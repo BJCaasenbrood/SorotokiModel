@@ -16,6 +16,7 @@ classdef beamoptions
         Flag;
         Display;
         DofMap;
+        BaseDofMap;
         Space;
         SpaceHorizon;
         SpaceStep;

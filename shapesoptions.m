@@ -5,6 +5,9 @@ classdef shapesoptions
         Table;
         NModal;
         NDof;
+        BaseTable;
+        NBase;
+        NBaseDof;
 
         Dimension;
         Color;

@@ -16,7 +16,7 @@ function Shapes = compute(Shapes,varargin)
     Shapes = assembleBoundaryShapes(Shapes);
     
     Shapes.system.fResidual = Shapes.system.fElastic + Shapes.system.fDamping ... 
-        + Shapes.system.fCoriolis - Shapes.system.fInput + Shapes.system.fBody ...
-        + Shapes.system.fDrag;
+        + Shapes.system.fCoriolis + Shapes.system.fBody + Shapes.system.fDrag ...
+        - Shapes.system.fInput;
     
 end

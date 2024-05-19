@@ -17,6 +17,7 @@ function [Jn, Jtn, Etan] = computeFrameChangeFast(dx,...
 
         % reorient Jacobian 
         J0 = Ad * J(:,:,ii);
+
         Jn(:,:,ii) = J0;
 
         % compute velocity twist

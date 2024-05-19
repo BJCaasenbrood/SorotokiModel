@@ -12,11 +12,13 @@ function Shapes = simulate(Shapes, varargin)
         % progBar = ProgressBar(NSteps + 1,'Title', 'Solve dynamic FEM');
     end
 
+    idq = 1:sum(Shapes.options.NModal);
+    id0 = idq(end) + (1:sum(Shapes.options.NBase));
     Shapes.solver.Time = 0;
 
     % preallocate solutions
-    Shapes.solver.sol.yout = zeros(NSteps,Shapes.NJoint);
-    Shapes.solver.sol.tout = zeros(NSteps,1);
+    Shapes.solver.sol.yout = zeros(NSteps, Shapes.NJoint);
+    Shapes.solver.sol.tout = zeros(NSteps, 1);
     Shapes.solver.SubIteration = 1;
     
     if ~isfield(Shapes.solver.sol,'ddx')
@@ -26,7 +28,7 @@ function Shapes = simulate(Shapes, varargin)
         A = Shapes.system.Mass;
         b = - 0*Shapes.system.fResidual - (Shapes.system.Damping ...
             + Shapes.system.Coriolis ) * Shapes.solver.sol.dx;
-    
+
         Shapes.solver.sol.ddx = A \ b;
     end
     
@@ -47,30 +49,26 @@ function Shapes = simulate(Shapes, varargin)
             Shapes.solver.Iteration < Shapes.solver.MaxIteration 
     
             dxf = dx0 + dt * ((1-gamma)*ddxf + gamma*ddx0);
-            xf  = x0  + dt * dx0 + 0.5 * dt*dt * ...
+            xf  = x0 + dt * dx0 + 0.5 * dt*dt * ...
                  ((1-2*beta)*ddxf + 2*beta*ddx0);
     
             x1   = (1-alphaF)*xf + alphaF*x0;
             dx1  = (1-alphaF)*dxf + alphaF*dx0;     
-            ddx1 = (1-alphaF)*ddx0 + alphaF*ddxf;      
+            ddx1 = (1-alphaF)*ddx0 + alphaF*ddxf;  
     
             Shapes.solver.sol.x   = x1;
             Shapes.solver.sol.dx  = dx1;
             Shapes.solver.sol.ddx = ddx1;
             Shapes.solver.Time    = tf + dt - alphaF*dt;
     
-            % if Shapes.solver.Iteration < 50
-                Shapes = Shapes.compute();
-            % else
-            %     Shapes = Shapes.compute('nobuild',true);
-            % end
+            Shapes = Shapes.compute();
     
             A = (1-alphaF) * beta * dt*dt * Shapes.system.Tangent + ...
-                (1-alphaF) * gamma * dt * Shapes.system.Damping + ...
-                (1-alphaF) * gamma * dt * Shapes.system.Viscous + ...
-                (1-alphaF) * gamma * dt * Shapes.system.Coriolis + ...
-                (1-alphaM) * Shapes.system.Mass;
-    
+                  (1-alphaF) * gamma * dt * Shapes.system.Damping + ...
+                  (1-alphaF) * gamma * dt * Shapes.system.Viscous + ...
+                  (1-alphaF) * gamma * dt * Shapes.system.Coriolis + ...
+                  (1-alphaM) * Shapes.system.Mass;
+
             b = Shapes.system.Mass * ddx1 + Shapes.system.fResidual;
     
             % linear solve
@@ -101,22 +99,29 @@ function Shapes = simulate(Shapes, varargin)
 
         step = Shapes.solver.SubIteration;
         Shapes.solver.sol.yout(step,:) = Shapes.solver.sol.x;
-        Shapes.solver.sol.tout(step)   = Shapes.solver.Time;
-        Shapes.solver.SubIteration = Shapes.solver.SubIteration + 1;
+        Shapes.solver.sol.tout(step)  = Shapes.solver.Time;
+        Shapes.solver.SubIteration   = Shapes.solver.SubIteration + 1;
     
         Shapes.solver.Time = clamp(tf + Shapes.solver.TimeStep,...
             0,Shapes.solver.TimeHorizon);
-    
+      
         Shapes.solver.sol.dx = dx0 + dt * ((1-gamma)*ddxf + gamma * ddx0);    
         Shapes.solver.sol.x  = x0 + dt * dx0 + 0.5 * dt*dt * ...
             ((1 - 2*beta)*ddxf + 2 * beta * ddx0);
 
+        Omega = Shapes.beamsolver.BaseDofMap * Shapes.solver.sol.x(id0);
+        Shapes.solver.sol.g0 = expmapSE3(hat(Omega));
+        % xi0 = wedge(logmapSE3(Shapes.solver.sol.g0));
+        % 
+        % xi  = xi0 + * Shapes.beamsolver.BaseDofMap * ...
+        %      (dt * v0 + 0.5 * dt*dt * ...
+        %      ((1 - 2*beta)*dvf + 2 * beta * dv0));
+        % 
+        % Shapes.solver.sol.g0 = expmapSE3(hat(xi));
+
         if ~isempty(Shapes.options.Display)
             Shapes = Shapes.options.Display(Shapes);
         end
-        % view(30,30);
-        % axis([-20,60,-20,20,-100,20]);
-        % end
     end
 
     if Shapes.solver.isLog

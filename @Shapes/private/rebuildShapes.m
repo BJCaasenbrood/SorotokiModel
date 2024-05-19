@@ -4,21 +4,26 @@ Shapes = vararginParser(Shapes,varargin{:});
 
 set = 1:6;
 I6  = eye(6);
-Xa  = [];
+[Xa, Xa0] = deal([]);
 
 for ii = 1:6
     for jj = 1:Shapes.options.NModal(ii)
-        Xa = [Xa,set(ii)];
+        Xa = [Xa, set(ii)];
+    end
+    for jj = 1:Shapes.options.NBase(ii)
+        Xa0 = [Xa0, set(ii)];
     end
 end
 
-Shapes.NJoint = sum(Shapes.options.NModal);
+Shapes.NJoint = sum(Shapes.options.NModal) + sum(Shapes.options.NBase);
 Shapes.NDim   = 2 * Shapes.NJoint;
 
 Shapes.solver.sol.x  = zeros(Shapes.NJoint,1);
 Shapes.solver.sol.dx = zeros(Shapes.NJoint,1);
+Shapes.solver.sol.g0 = Shapes.beamsolver.g0;
 
 Shapes.beamsolver.DofMap = I6(:,Xa);
+Shapes.beamsolver.BaseDofMap = I6(:,Xa0);
 Shapes.beamsolver.Space  = linspace(0,1,Shapes.NNode);
 Shapes.beamsolver.SpaceStep = Shapes.Length/(Shapes.NNode);
 
@@ -37,6 +42,7 @@ Shapes.beamsolver.Mtt = Shapes.Material.params.Rho * ...
 % linear approximation of the stiffness
 [~,Ktt] = Shapes.Material.PiollaStress(eye(3));
 Ktt = 4.15*diag(voightextraction(Ktt));
+
 % Ktt = diag(voightextraction(Ktt));
 % E  = Shapes.Material.getModulus();
 % Nu = Shapes.Material.Nu;

@@ -1,13 +1,16 @@
-function [G, J, Jt] = computeForwardKinematicsGaussFast(x,dx,... % states
+function [G, J, Jt] = computeFreeForwardKinematicsGaussFast(x,dx,... % states
     p0,...      % position zero
     Phi0,...    % phi zero
     xia0,...    % evaluated intrinsic strain vector
     Th,...      % evaluated Theta matrix
     Ba,...      % state to strain mapping
+    B0,...      % state to base vel mapping
     W,...       % gauss weights
     S)          % gauss pts
 
-nq  = numel(x);
+nx = numel(x);
+nq = size(Ba,2);
+nq0 = size(B0,2);
 NNode = size(W,2);
 NGauss = size(W,1);
 
@@ -15,10 +18,42 @@ dB  = zeros(6,nq);
 dBt = zeros(6,nq);
 G   = zeros(4,4,NNode+1);
 gi  = zeros(4,4,NGauss,NNode+1);
-J   = zeros(6,nq,NNode+1);
-Jt  = zeros(6,nq,NNode+1);
+J   = zeros(6,nx,NNode+1);
+Jt  = zeros(6,nx,NNode+1);
+
+q  = x(1:nq);
+a  = B0 * x((nq+1):end);
+da = B0 * dx((nq+1):end);
+w  = da(1:3);
+
+phi = a(1:3);
+% p0  = a(4:6);
 
 G(:,:,1) = SE3_inline(Phi0, p0);
+% G(:,:,1) = expmapSE3_inline(hat(Twist));
+
+t = norm(phi);
+if abs(t) < 1e-9
+    Jl = eye(3);
+else
+    a = (1-cos(t)) / (t*t);
+    b = (t-sin(t)) / (t*t*t);
+    Jl = eye(3) + a * skew_inline(phi) + b*skew_inline(phi)*skew_inline(phi);
+end
+
+% RR  = [eye(3)   zeros(3); 
+%        zeros(3), Phi0.'];
+
+% dRR = [zeros(3), zeros(3); 
+%        zeros(3), -skew_inline(w)*Phi0.'];
+
+RR  = [Phi0.' * Jl,  zeros(3); 
+       zeros(3), Phi0.'];
+
+dRR = [-skew_inline(w)*Phi0.', zeros(3); 
+       zeros(3), -skew_inline(w)*Phi0.'];
+
+J(:,:,1) = [dB, RR * B0];
 
 for jj = 1:NNode
 
@@ -26,7 +61,7 @@ for jj = 1:NNode
     Y1 = zeros(6,1);
 
     for ii = 1:NGauss
-        dXI = ( Ba * Th(:,:,ii+1,jj) ) * x + xia0(:,:,ii+1,jj);
+        dXI = ( Ba * Th(:,:,ii+1,jj) ) * q + xia0(:,:,ii+1,jj);
         Y1  = Y1 + W(ii,jj) * dXI;
     end
 
@@ -44,23 +79,28 @@ for jj = 1:NNode
         dB  = dB + W(ii,jj) * dBi;
     end
     
-    % Ad = Admap(G(1:3,1:3,jj+1),[0;0;0]) * ...
-    Ad = Admapinv_inline( G(1:3,1:3,jj+1), G(1:3,4,jj+1) );
-    J(:,:,jj+1) = Ad * dB;
+    Ad0 = Admap_inline( G(1:3,1:3,1), G(1:3,4,1)  );
+    Ad  = Admapinv_inline( G(1:3,1:3,jj+1), G(1:3,4,jj+1) );
+
+    J(:,:,jj+1) = Ad * [dB, Ad0 * RR * B0];
 
     % solve for Jt(s,t)
     % gauss quad integration for strain
     for ii = 1:NGauss
-        t  = (S(ii+1,jj) - S(1,jj)) / (S(end,jj) - S(1,jj));
-        Ji  = t * J(:,:,jj) + (1-t) * J(:,:,jj+1);
+        t    = (S(ii+1,jj) - S(1,jj)) / (S(end,jj) - S(1,jj));
+        Ji   = t * J(:,:,jj) + (1-t) * J(:,:,jj+1);
+        Adg  = Admap_inline(gi(1:3,1:3,ii,jj), gi(1:3,4,ii,jj));
         dBti = ( Ba * Th(:,:,ii+1,jj) );
         deta = Ji * dx;
-        dBt  = dBt + W(ii,jj) * Admap_inline(gi(1:3,1:3,ii,jj), gi(1:3,4,ii,jj)) * admap_inline(deta) * dBti;
+        dBt  = dBt + W(ii,jj) * Adg * admap_inline(deta) * dBti;
     end
 
     eta = J(:,:,jj+1) * dx;
-    ad = admap_inline(eta);
-    Jt(:,:,jj+1) = -ad * J(:,:,jj+1) + Ad * dBt;
+    ad  = admap_inline(eta);
+    ad0 = admap_inline(RR * da);
+    
+    Jt(:,:,jj+1) = -ad * Ad * [dB, Ad0 * RR * B0] + Ad * [dBt, Ad0 * ad0 * RR * B0] + ...
+                    Ad * [dB * 0, Ad0 * dRR * B0];
 end
 
 end
@@ -80,8 +120,8 @@ function Z = interpolateSE3_inline(X,Y,t)
     T = dH(1:3,4);
 
     % get log of rotation matrix
-    S  = logmapSO3_inline(R, tol);
-    th = norm([S(3,2); S(1,3); S(2,1)]);
+    [S, th]  = logmapSO3_inline(R);
+    % th = norm([S(3,2); S(1,3); S(2,1)]);
 
     if abs(th) >= tol
         tth = t*th;        
@@ -93,65 +133,65 @@ function Z = interpolateSE3_inline(X,Y,t)
     end
 
     U  = Vi * T;
-    Rt = expmapSO3_inline(t * S, tol);
+    Rt = expmapSO3_inline(t * S);
     Tt = t * Vt * U;
     Z  = ([Rt,Tt;0,0,0,1]) * X;
 
 end
 
-function Y = expmapSE3_inline(X)
+% function Y = expmapSE3_inline(X)
 
-    tol = 1e-9;
+%     tol = 1e-9;
 
-    S = X(1:3,1:3);
-    U = X(1:3,4);
+%     S = X(1:3,1:3);
+%     U = X(1:3,4);
 
-    Y = zeros(4);
-    Y(4,4)     = 1;
-    Y(1:3,1:3) = expmapSO3_inline(S, tol);
-    Y(1:3,4)   = (tmapSO3_line(S, tol)) * U;
-end
+%     Y = zeros(4);
+%     Y(4,4)     = 1;
+%     Y(1:3,1:3) = expmapSO3_inline(S, tol);
+%     Y(1:3,4)   = (tmapSO3_inline(S,Y(1:3,1:3), tol)) * U;
+% end
 
-function Y = logmapSO3_inline(X, tol)
-    S = X;
-    theta = acos(0.5*(trace(S) - 1));
+% function Y = logmapSO3_inline(X, tol)
+%     S = X;
+%     theta = acos(0.5*(trace(S) - 1));
 
-    if sin(theta) >= tol
-        alpha = 0.5*theta/sin(theta);
-        Y = alpha*(S - S.'); 
-    else
-        Y = zeros(3); 
-    end
-end
+%     if sin(theta) >= tol
+%         alpha = 0.5*theta/sin(theta);
+%         Y = alpha*(S - S.'); 
+%     else
+%         Y = zeros(3); 
+%     end
+% end
 
-function Y = expmapSO3_inline(X, tol)
-    S = X;
-    X = [S(3,2); S(1,3); S(2,1)];
+% function Y = expmapSO3_inline(X, tol)
+%     S = X;
+%     X = [S(3,2); S(1,3); S(2,1)];
 
-    t = norm(X);
-    if abs(t) >= tol
-        a = sin(t)/t;
-        b = (1-cos(t))/(t*t);
+%     t = norm(X);
+%     if abs(t) >= tol
+%         a = sin(t)/t;
+%         b = (1-cos(t))/(t*t);
         
-        Y = eye(3) + a*S + b*S*S;
-    else
-        Y = eye(3);
-    end
-end
+%         Y = eye(3) + a*S + b*S*S;
+%     else
+%         Y = eye(3);
+%     end
+% end
 
-function Y = tmapSO3_line(X, tol)
-    S = X;
-    X = [S(3,2); S(1,3); S(2,1)];
+% function Y = tmapSO3_inline(X,R,tol)
+%     S = X;
+%     X = [S(3,2); S(1,3); S(2,1)];
 
-    t = norm(X);
-    if abs(t) >= tol
-        a = sin(t)/t;
-        b = (1-cos(t))/(t*t);
-        Y = eye(3) + b*S + (1/(t*t))*(1-a)*S*S;
-    else
-        Y = eye(3);
-    end
-end
+%     t = norm(X);
+%     if abs(t) >= tol
+%         I = eye(3);
+%         a = 1 / (t*t);
+%         Y = a * (I-R)*S + a * X * X.';
+%     else
+%         Y = eye(3);
+%     end
+% end
 
 function g = admap_inline(x)
     Wh = skew_inline(x(1:3));
