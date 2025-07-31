@@ -139,18 +139,18 @@ function Z = interpolateSE3_inline(X,Y,t)
 
 end
 
-% function Y = expmapSE3_inline(X)
+function Y = expmapSE3_inline(X)
 
-%     tol = 1e-9;
+    tol = 1e-9;
 
-%     S = X(1:3,1:3);
-%     U = X(1:3,4);
+    S = X(1:3,1:3);
+    U = X(1:3,4);
 
-%     Y = zeros(4);
-%     Y(4,4)     = 1;
-%     Y(1:3,1:3) = expmapSO3_inline(S, tol);
-%     Y(1:3,4)   = (tmapSO3_inline(S,Y(1:3,1:3), tol)) * U;
-% end
+    Y = zeros(4);
+    Y(4,4)     = 1;
+    Y(1:3,1:3) = expmapSO3_inline(S, tol);
+    Y(1:3,4)   = (tmapSO3_inline(S,Y(1:3,1:3), tol)) * U;
+end
 
 % function Y = logmapSO3_inline(X, tol)
 %     S = X;
@@ -164,34 +164,34 @@ end
 %     end
 % end
 
-% function Y = expmapSO3_inline(X, tol)
-%     S = X;
-%     X = [S(3,2); S(1,3); S(2,1)];
+function Y = expmapSO3_inline(X, tol)
+    S = X;
+    X = [S(3,2); S(1,3); S(2,1)];
 
-%     t = norm(X);
-%     if abs(t) >= tol
-%         a = sin(t)/t;
-%         b = (1-cos(t))/(t*t);
+    t = norm(X);
+    if abs(t) >= tol
+        a = sin(t)/t;
+        b = (1-cos(t))/(t*t);
         
-%         Y = eye(3) + a*S + b*S*S;
-%     else
-%         Y = eye(3);
-%     end
-% end
+        Y = eye(3) + a*S + b*S*S;
+    else
+        Y = eye(3);
+    end
+end
 
-% function Y = tmapSO3_inline(X,R,tol)
-%     S = X;
-%     X = [S(3,2); S(1,3); S(2,1)];
+function Y = tmapSO3_inline(X,R,tol)
+    S = X;
+    X = [S(3,2); S(1,3); S(2,1)];
 
-%     t = norm(X);
-%     if abs(t) >= tol
-%         I = eye(3);
-%         a = 1 / (t*t);
-%         Y = a * (I-R)*S + a * X * X.';
-%     else
-%         Y = eye(3);
-%     end
-% end
+    t = norm(X);
+    if abs(t) >= tol
+        I = eye(3);
+        a = 1 / (t*t);
+        Y = a * (I-R)*S + a * X * X.';
+    else
+        Y = eye(3);
+    end
+end
 
 function g = admap_inline(x)
     Wh = skew_inline(x(1:3));
